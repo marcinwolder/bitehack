@@ -233,6 +233,9 @@ function FitBounds({ polygonPoints }: { polygonPoints: LatLngTuple[] | null }) {
 	return null;
 }
 
+const formatShortDate = (value: string) =>
+	new Date(value).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+
 function WeatherLineChart({ series }: WeatherChartProps) {
 	if (series.length < 2) {
 		return (
@@ -269,15 +272,19 @@ function WeatherLineChart({ series }: WeatherChartProps) {
 			return toPoint(point.temperature, absoluteIndex);
 		})
 		.join(" ");
+	const midIndex = Math.floor(series.length / 2);
 
 	return (
 		<div className="rounded-3xl border border-emerald-100 bg-white/90 p-6 shadow-sm">
 			<div className="flex flex-wrap items-center justify-between gap-3">
 				<div>
-					<h3 className="text-lg font-semibold text-stone-800">21-day temperature pulse</h3>
+					<h3 className="text-lg font-semibold text-stone-800">Temperature</h3>
 					<p className="text-sm text-stone-500">Last 7 days vs. next 14 days.</p>
 				</div>
-				<span className="badge badge-outline border-emerald-200 text-emerald-700">Open-Meteo</span>
+				<div className="flex items-center gap-2">
+					<span className="badge badge-outline border-emerald-200 text-emerald-700">Open-Meteo</span>
+					<span className="badge badge-ghost text-stone-500">°C</span>
+				</div>
 			</div>
 			<div className="mt-4 overflow-hidden rounded-2xl border border-stone-100 bg-stone-50">
 				<svg viewBox={`0 0 ${width} ${height}`} className="h-56 w-full">
@@ -308,6 +315,11 @@ function WeatherLineChart({ series }: WeatherChartProps) {
 						/>
 					) : null}
 				</svg>
+			</div>
+			<div className="mt-2 flex items-center justify-between text-[11px] text-stone-400">
+				<span>{formatShortDate(series[0].date)}</span>
+				<span>{formatShortDate(series[midIndex].date)}</span>
+				<span>{formatShortDate(series[series.length - 1].date)}</span>
 			</div>
 			<div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-stone-500">
 				<span>Min {minTemp.toFixed(0)}°C</span>
@@ -356,15 +368,19 @@ function RainLineChart({ series }: RainChartProps) {
 			return toPoint(point.precipitation, absoluteIndex);
 		})
 		.join(" ");
+	const midIndex = Math.floor(series.length / 2);
 
 	return (
 		<div className="rounded-3xl border border-sky-100 bg-white/90 p-6 shadow-sm">
 			<div className="flex flex-wrap items-center justify-between gap-3">
 				<div>
-					<h3 className="text-lg font-semibold text-stone-800">21-day rain pulse</h3>
+					<h3 className="text-lg font-semibold text-stone-800">Rainfall</h3>
 					<p className="text-sm text-stone-500">Last 7 days vs. next 14 days.</p>
 				</div>
-				<span className="badge badge-outline border-sky-200 text-sky-700">Open-Meteo</span>
+				<div className="flex items-center gap-2">
+					<span className="badge badge-outline border-sky-200 text-sky-700">Open-Meteo</span>
+					<span className="badge badge-ghost text-stone-500">mm</span>
+				</div>
 			</div>
 			<div className="mt-4 overflow-hidden rounded-2xl border border-stone-100 bg-stone-50">
 				<svg viewBox={`0 0 ${width} ${height}`} className="h-56 w-full">
@@ -395,6 +411,11 @@ function RainLineChart({ series }: RainChartProps) {
 						/>
 					) : null}
 				</svg>
+			</div>
+			<div className="mt-2 flex items-center justify-between text-[11px] text-stone-400">
+				<span>{formatShortDate(series[0].date)}</span>
+				<span>{formatShortDate(series[midIndex].date)}</span>
+				<span>{formatShortDate(series[series.length - 1].date)}</span>
 			</div>
 			<div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-stone-500">
 				<span>Min {minValue.toFixed(1)} mm</span>
@@ -441,15 +462,19 @@ function NdviLineChart({ series }: NdviChartProps) {
 			return toPoint(point.value, absoluteIndex);
 		})
 		.join(" ");
+	const midIndex = Math.floor(series.length / 2);
 
 	return (
 		<div className="rounded-3xl border border-emerald-100 bg-white/90 p-6 shadow-sm">
 			<div className="flex flex-wrap items-center justify-between gap-3">
 				<div>
-					<h3 className="text-lg font-semibold text-stone-800">21-day NDVI pulse</h3>
+					<h3 className="text-lg font-semibold text-stone-800">NDVI</h3>
 					<p className="text-sm text-stone-500">Vegetation strength trend.</p>
 				</div>
-				<span className="badge badge-outline border-emerald-200 text-emerald-700">Mock NDVI</span>
+				<div className="flex items-center gap-2">
+					<span className="badge badge-outline border-emerald-200 text-emerald-700">Mock NDVI</span>
+					<span className="badge badge-ghost text-stone-500">Index</span>
+				</div>
 			</div>
 			<div className="mt-4 overflow-hidden rounded-2xl border border-stone-100 bg-stone-50">
 				<svg viewBox={`0 0 ${width} ${height}`} className="h-56 w-full">
@@ -480,6 +505,11 @@ function NdviLineChart({ series }: NdviChartProps) {
 						/>
 					) : null}
 				</svg>
+			</div>
+			<div className="mt-2 flex items-center justify-between text-[11px] text-stone-400">
+				<span>{formatShortDate(series[0].date)}</span>
+				<span>{formatShortDate(series[midIndex].date)}</span>
+				<span>{formatShortDate(series[series.length - 1].date)}</span>
 			</div>
 			<div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-stone-500">
 				<span>Min {minValue.toFixed(2)}</span>
@@ -876,82 +906,86 @@ export default function DashboardScreen() {
 				</section>
 
 				{selectedField ? (
-					<div className="grid gap-8 lg:grid-cols-2">
-						<section className="rounded-3xl border border-emerald-100 bg-white/90 p-4 shadow-sm">
-							<div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-								<div>
-									<h2 className="text-lg font-semibold text-stone-800">Field map</h2>
-									<p className="text-sm text-stone-500">
-										{selectedField.name} boundaries and location.
-									</p>
+					<div className="flex flex-col gap-8">
+						<div className="grid gap-8 lg:grid-cols-2">
+							<section className="rounded-3xl border border-emerald-100 bg-white/90 p-4 shadow-sm">
+								<div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+									<div>
+										<h2 className="text-lg font-semibold text-stone-800">Field map</h2>
+										<p className="text-sm text-stone-500">
+											{selectedField.name} boundaries and location.
+										</p>
+									</div>
+									<button
+										className="btn btn-outline btn-sm"
+										onClick={() => openEditOverlay(selectedField)}
+									>
+										Edit field
+									</button>
 								</div>
-								<button
-									className="btn btn-outline btn-sm"
-									onClick={() => openEditOverlay(selectedField)}
-								>
-									Edit field
-								</button>
-							</div>
-							<div className="h-[360px] overflow-hidden rounded-2xl border border-emerald-100 md:h-[520px]">
-								<MapContainer
-									center={mapCenter}
-									zoom={13}
-									scrollWheelZoom
-									className="h-full w-full"
-								>
-									<TileLayer
-										attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-										url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-									/>
-									<Polygon positions={selectedField.polygon} pathOptions={{ color: "#0f766e" }} />
-									<FitBounds polygonPoints={selectedField.polygon} />
-								</MapContainer>
-							</div>
-						</section>
+								<div className="h-[360px] overflow-hidden rounded-2xl border border-emerald-100 md:h-[520px]">
+									<MapContainer
+										center={mapCenter}
+										zoom={13}
+										scrollWheelZoom
+										className="h-full w-full"
+									>
+										<TileLayer
+											attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+											url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+										/>
+										<Polygon positions={selectedField.polygon} pathOptions={{ color: "#0f766e" }} />
+										<FitBounds polygonPoints={selectedField.polygon} />
+									</MapContainer>
+								</div>
+							</section>
 
-						<section className="rounded-3xl border border-emerald-100 bg-white/90 p-6 shadow-sm">
-							<h2 className="text-lg font-semibold text-stone-800">Field overview</h2>
-							<p className="text-sm text-stone-500">
-								{selectedField.crop} · {formatHa(selectedField.area)}
-							</p>
-							<div className="mt-4 grid gap-3 sm:grid-cols-2">
-								<div className="rounded-2xl border border-stone-100 bg-stone-50 p-4 text-sm text-stone-600">
-									<p className="font-semibold text-stone-700">Crop status</p>
-									<p className="mt-1">{getMockCropStatus(selectedField.id)}</p>
+							<section className="rounded-3xl border border-emerald-100 bg-white/90 p-6 shadow-sm">
+								<h2 className="text-lg font-semibold text-stone-800">Field overview</h2>
+								<p className="text-sm text-stone-500">
+									{selectedField.crop} · {formatHa(selectedField.area)}
+								</p>
+								<div className="mt-4 grid gap-3 sm:grid-cols-2">
+									<div className="rounded-2xl border border-stone-100 bg-stone-50 p-4 text-sm text-stone-600">
+										<p className="font-semibold text-stone-700">Crop status</p>
+										<p className="mt-1">{getMockCropStatus(selectedField.id)}</p>
+									</div>
+									<div className="rounded-2xl border border-stone-100 bg-stone-50 p-4 text-sm text-stone-600">
+										<p className="font-semibold text-stone-700">Health score</p>
+										<p className="mt-1">{getMockHealthScore(selectedField.id)}</p>
+									</div>
 								</div>
-								<div className="rounded-2xl border border-stone-100 bg-stone-50 p-4 text-sm text-stone-600">
-									<p className="font-semibold text-stone-700">Health score</p>
-									<p className="mt-1">{getMockHealthScore(selectedField.id)}</p>
-								</div>
-							</div>
-						</section>
+							</section>
+						</div>
 
-						{temperaturePanel}
-						{rainPanel}
-						<NdviLineChart series={ndviSeries} />
-						<div
-							className={`rounded-3xl border ${ndviTone.border} bg-gradient-to-br ${ndviTone.background} p-6 shadow-sm`}
-						>
-							<div className="flex items-start justify-between gap-4">
-								<div>
-									<p className="text-sm text-stone-500">NDVI score</p>
-									<p className={`mt-2 text-3xl font-semibold ${ndviTone.accent}`}>
-										{ndviScore.toFixed(2)}
-									</p>
-									<p className={`text-sm font-semibold ${ndviTone.accent}`}>{ndviTone.label}</p>
+						<div className="grid gap-8 lg:grid-cols-3">
+							{temperaturePanel}
+							{rainPanel}
+							<NdviLineChart series={ndviSeries} />
+							<div
+								className={`rounded-3xl border ${ndviTone.border} bg-gradient-to-br ${ndviTone.background} p-6 shadow-sm lg:col-span-3`}
+							>
+								<div className="flex items-start justify-between gap-4">
+									<div>
+										<p className="text-sm text-stone-500">NDVI score</p>
+										<p className={`mt-2 text-3xl font-semibold ${ndviTone.accent}`}>
+											{ndviScore.toFixed(2)}
+										</p>
+										<p className={`text-sm font-semibold ${ndviTone.accent}`}>{ndviTone.label}</p>
+									</div>
+									<div className="relative flex h-12 w-12 items-center justify-center">
+										<span
+											className={`absolute h-10 w-10 rounded-full ${ndviTone.ring} opacity-20 ${
+												isNdviExcellent ? "animate-pulse" : ""
+											}`}
+										/>
+										<span className={`relative h-3 w-3 rounded-full ${ndviTone.ring}`} />
+									</div>
 								</div>
-								<div className="relative flex h-12 w-12 items-center justify-center">
-									<span
-										className={`absolute h-10 w-10 rounded-full ${ndviTone.ring} opacity-20 ${
-											isNdviExcellent ? "animate-pulse" : ""
-										}`}
-									/>
-									<span className={`relative h-3 w-3 rounded-full ${ndviTone.ring}`} />
+								<div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs text-stone-500">
+									<span>Scale 0.00 - 1.00</span>
+									<span>High vegetation vigor</span>
 								</div>
-							</div>
-							<div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs text-stone-500">
-								<span>Scale 0.00 - 1.00</span>
-								<span>High vegetation vigor</span>
 							</div>
 						</div>
 					</div>
