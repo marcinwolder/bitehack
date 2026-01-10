@@ -34,7 +34,11 @@ export default function FieldListPanel({
 					<span className="badge badge-outline border-emerald-200 text-emerald-700">
 						{fields.length} fields
 					</span>
-					<button className="btn btn-success" type="button" onClick={onAdd}>
+					<button
+						className="btn btn-success"
+						type="button"
+						onClick={onAdd}
+					>
 						Add field
 					</button>
 				</div>
@@ -74,7 +78,9 @@ export default function FieldListPanel({
 							<div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-stone-500">
 								<span>
 									Updated{" "}
-									{new Date(field.updatedAt).toLocaleDateString()}
+									{new Date(
+										field.updatedAt
+									).toLocaleDateString()}
 								</span>
 								<div className="flex items-center gap-3">
 									<button
@@ -82,14 +88,14 @@ export default function FieldListPanel({
 										onClick={() => {
 											onEdit(field);
 										}}
-										className="font-semibold text-emerald-700 hover:text-emerald-800"
+										className="font-semibold text-emerald-700 hover:text-emerald-800 hover:cursor-pointer"
 									>
 										Edit
 									</button>
 									<button
 										type="button"
 										onClick={() => onRemove(field.id)}
-										className="font-semibold text-red-600 hover:text-red-700"
+										className="font-semibold text-red-600 hover:text-red-700 hover:cursor-pointer"
 									>
 										Remove
 									</button>
