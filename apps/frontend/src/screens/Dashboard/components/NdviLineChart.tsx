@@ -1,7 +1,10 @@
+import { useState } from "react";
 import type { NdviChartProps } from "../types";
 import { formatShortDate } from "../utils";
 
 export default function NdviLineChart({ series }: NdviChartProps) {
+	const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+
 	if (series.length < 2) {
 		return (
 			<div className="rounded-2xl border border-stone-100 bg-stone-50 p-6 text-sm text-stone-500">
@@ -23,7 +26,11 @@ export default function NdviLineChart({ series }: NdviChartProps) {
 	const toPoint = (value: number, index: number) => {
 		const x = padding + (index / (series.length - 1)) * chartWidth;
 		const y = padding + (1 - (value - minValue) / range) * chartHeight;
-		return `${x},${y}`;
+		return { x, y };
+	};
+	const toPointString = (value: number, index: number) => {
+		const point = toPoint(value, index);
+		return `${point.x},${point.y}`;
 	};
 
 	const firstForecastIndex = series.findIndex((point) => point.isForecast);
@@ -35,15 +42,22 @@ export default function NdviLineChart({ series }: NdviChartProps) {
 			? []
 			: series.slice(Math.max(splitIndex - 1, 0));
 	const historicalPath = historical
-		.map((point, index) => toPoint(point.value, index))
+		.map((point, index) => toPointString(point.value, index))
 		.join(" ");
 	const forecastPath = forecast
 		.map((point, index) => {
 			const absoluteIndex = index + Math.max(splitIndex - 1, 0);
-			return toPoint(point.value, absoluteIndex);
+			return toPointString(point.value, absoluteIndex);
 		})
 		.join(" ");
 	const midIndex = Math.floor(series.length / 2);
+	const hoverPoint =
+		hoverIndex !== null ? toPoint(series[hoverIndex].value, hoverIndex) : null;
+	const hoverLabel =
+		hoverIndex !== null ? series[hoverIndex].value.toFixed(2) : null;
+	const hoverLabelWidth =
+		hoverLabel !== null ? hoverLabel.length * 7 + 12 : 0;
+	const hoverLabelHeight = 20;
 
 	return (
 		<div className="rounded-3xl border border-emerald-100 bg-white/90 p-6 shadow-sm">
@@ -70,6 +84,18 @@ export default function NdviLineChart({ series }: NdviChartProps) {
 					viewBox={`0 0 ${width} ${height}`}
 					preserveAspectRatio="none"
 					className="h-56 w-full"
+					onMouseLeave={() => setHoverIndex(null)}
+					onMouseMove={(event) => {
+						const bounds = event.currentTarget.getBoundingClientRect();
+						const x = event.clientX - bounds.left;
+						const svgX = (x / bounds.width) * width;
+						const ratio = (svgX - padding) / chartWidth;
+						const nextIndex = Math.min(
+							series.length - 1,
+							Math.max(0, Math.round(ratio * (series.length - 1)))
+						);
+						setHoverIndex(nextIndex);
+					}}
 				>
 					<defs>
 						<linearGradient
@@ -108,6 +134,42 @@ export default function NdviLineChart({ series }: NdviChartProps) {
 							strokeLinecap="round"
 							strokeLinejoin="round"
 						/>
+					) : null}
+					{hoverPoint && hoverLabel ? (
+						<g>
+							<circle
+								cx={hoverPoint.x}
+								cy={hoverPoint.y}
+								r="5"
+								fill="#ffffff"
+								stroke="#16a34a"
+								strokeWidth="2"
+							/>
+							<rect
+								x={Math.min(
+									Math.max(hoverPoint.x + 10, 6),
+									width - hoverLabelWidth - 6
+								)}
+								y={Math.max(hoverPoint.y - hoverLabelHeight - 6, 6)}
+								width={hoverLabelWidth}
+								height={hoverLabelHeight}
+								rx="6"
+								fill="#ffffff"
+								stroke="#dcfce7"
+							/>
+							<text
+								x={Math.min(
+									Math.max(hoverPoint.x + 10, 6),
+									width - hoverLabelWidth - 6
+								) + hoverLabelWidth / 2}
+								y={Math.max(hoverPoint.y - hoverLabelHeight - 6, 6) + 14}
+								textAnchor="middle"
+								fontSize="11"
+								fill="#15803d"
+							>
+								{hoverLabel}
+							</text>
+						</g>
 					) : null}
 				</svg>
 			</div>
