@@ -24,3 +24,39 @@ export const getMockHealthScore = (fieldId: string) => {
 	const hash = hashId(fieldId);
 	return 62 + (hash % 38);
 };
+
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
+const buildDateSeries = (historicalDays: number, forecastDays: number) => {
+	const today = new Date();
+	const total = historicalDays + forecastDays;
+	return Array.from({ length: total }, (_, index) => {
+		const date = new Date(today);
+		date.setDate(today.getDate() - (historicalDays - 1 - index));
+		return date.toISOString().slice(0, 10);
+	});
+};
+
+export const getMockNdviSeries = (fieldId: string) => {
+	const hash = hashId(fieldId);
+	const base = 0.35 + (hash % 45) / 100;
+	const drift = ((hash % 17) - 8) / 500;
+	const dates = buildDateSeries(7, 14);
+	return dates.map((date, index) => {
+		const seasonal = Math.sin((index / 20) * Math.PI) * 0.08;
+		const noise = (((hash + index * 31) % 100) - 50) / 1000;
+		const value = clamp(base + seasonal + drift * index + noise, 0.1, 0.95);
+		return {
+			date,
+			value,
+			isForecast: index >= 7
+		};
+	});
+};
+
+export const getMockNdviScore = (fieldId: string) => {
+	const series = getMockNdviSeries(fieldId);
+	const recent = series.slice(4, 7);
+	const average = recent.reduce((sum, point) => sum + point.value, 0) / recent.length;
+	return clamp(Number(average.toFixed(2)), 0, 1);
+};

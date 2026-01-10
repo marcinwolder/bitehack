@@ -7,8 +7,13 @@ import { polygon } from "@turf/helpers";
 import { useFieldRepository } from "../../data/fieldRepositoryContext";
 import type { Field, LatLngTuple } from "../../data/fieldRepository";
 import { createOpenMeteoWeatherService } from "../../data/weatherService";
-import type { TemperaturePoint } from "../../data/weatherService";
-import { getMockCropStatus, getMockHealthScore } from "../../data/mockCropMetrics";
+import type { DailyWeatherSeries, PrecipitationPoint, TemperaturePoint } from "../../data/weatherService";
+import {
+	getMockCropStatus,
+	getMockHealthScore,
+	getMockNdviScore,
+	getMockNdviSeries
+} from "../../data/mockCropMetrics";
 
 const MOCK_USER_ID = 1;
 const AREA_UNIT = "ha";
@@ -49,6 +54,20 @@ type WeatherChartProps = {
 	series: TemperaturePoint[];
 };
 
+type RainChartProps = {
+	series: PrecipitationPoint[];
+};
+
+type NdviPoint = {
+	date: string;
+	value: number;
+	isForecast: boolean;
+};
+
+type NdviChartProps = {
+	series: NdviPoint[];
+};
+
 const toLngLatRing = (polygonPoints: LatLngTuple[]) => {
 	const ring = polygonPoints.map(([lat, lng]) => [lng, lat]);
 	if (ring.length > 0) {
@@ -78,6 +97,43 @@ const getPolygonCentroid = (polygonPoints: LatLngTuple[]) => {
 };
 
 const formatHa = (value: number) => `${value.toFixed(2)} ${AREA_UNIT}`;
+
+const getNdviTone = (score: number) => {
+	if (score >= 0.8) {
+		return {
+			label: "Excellent",
+			accent: "text-emerald-700",
+			border: "border-emerald-200",
+			background: "from-emerald-50 via-white to-white",
+			ring: "bg-emerald-400"
+		};
+	}
+	if (score >= 0.6) {
+		return {
+			label: "Healthy",
+			accent: "text-lime-700",
+			border: "border-lime-200",
+			background: "from-lime-50 via-white to-white",
+			ring: "bg-lime-400"
+		};
+	}
+	if (score >= 0.4) {
+		return {
+			label: "Moderate",
+			accent: "text-amber-700",
+			border: "border-amber-200",
+			background: "from-amber-50 via-white to-white",
+			ring: "bg-amber-400"
+		};
+	}
+	return {
+		label: "Low",
+		accent: "text-rose-700",
+		border: "border-rose-200",
+		background: "from-rose-50 via-white to-white",
+		ring: "bg-rose-400"
+	};
+};
 
 const createId = () => {
 	if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -262,6 +318,178 @@ function WeatherLineChart({ series }: WeatherChartProps) {
 	);
 }
 
+function RainLineChart({ series }: RainChartProps) {
+	if (series.length < 2) {
+		return (
+			<div className="rounded-2xl border border-stone-100 bg-stone-50 p-6 text-sm text-stone-500">
+				Not enough rain data for a chart yet.
+			</div>
+		);
+	}
+
+	const values = series.map((point) => point.precipitation);
+	const minValue = Math.min(...values);
+	const maxValue = Math.max(...values);
+	const range = Math.max(maxValue - minValue, 1);
+	const padding = 20;
+	const width = 640;
+	const height = 240;
+	const chartWidth = width - padding * 2;
+	const chartHeight = height - padding * 2;
+
+	const toPoint = (value: number, index: number) => {
+		const x = padding + (index / (series.length - 1)) * chartWidth;
+		const y = padding + (1 - (value - minValue) / range) * chartHeight;
+		return `${x},${y}`;
+	};
+
+	const firstForecastIndex = series.findIndex((point) => point.isForecast);
+	const splitIndex = firstForecastIndex === -1 ? series.length : firstForecastIndex;
+	const historical = series.slice(0, splitIndex);
+	const forecast = firstForecastIndex === -1 ? [] : series.slice(Math.max(splitIndex - 1, 0));
+	const historicalPath = historical
+		.map((point, index) => toPoint(point.precipitation, index))
+		.join(" ");
+	const forecastPath = forecast
+		.map((point, index) => {
+			const absoluteIndex = index + Math.max(splitIndex - 1, 0);
+			return toPoint(point.precipitation, absoluteIndex);
+		})
+		.join(" ");
+
+	return (
+		<div className="rounded-3xl border border-sky-100 bg-white/90 p-6 shadow-sm">
+			<div className="flex flex-wrap items-center justify-between gap-3">
+				<div>
+					<h3 className="text-lg font-semibold text-stone-800">21-day rain pulse</h3>
+					<p className="text-sm text-stone-500">Last 7 days vs. next 14 days.</p>
+				</div>
+				<span className="badge badge-outline border-sky-200 text-sky-700">Open-Meteo</span>
+			</div>
+			<div className="mt-4 overflow-hidden rounded-2xl border border-stone-100 bg-stone-50">
+				<svg viewBox={`0 0 ${width} ${height}`} className="h-56 w-full">
+					<defs>
+						<linearGradient id="rainLine" x1="0" y1="0" x2="1" y2="1">
+							<stop offset="0%" stopColor="#0ea5e9" />
+							<stop offset="100%" stopColor="#38bdf8" />
+						</linearGradient>
+					</defs>
+					<rect x="0" y="0" width={width} height={height} fill="#f8fafc" />
+					<polyline
+						points={historicalPath}
+						fill="none"
+						stroke="url(#rainLine)"
+						strokeWidth="3"
+						strokeLinecap="round"
+						strokeLinejoin="round"
+					/>
+					{forecast.length > 1 ? (
+						<polyline
+							points={forecastPath}
+							fill="none"
+							stroke="#38bdf8"
+							strokeWidth="3"
+							strokeDasharray="6 6"
+							strokeLinecap="round"
+							strokeLinejoin="round"
+						/>
+					) : null}
+				</svg>
+			</div>
+			<div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-stone-500">
+				<span>Min {minValue.toFixed(1)} mm</span>
+				<span>Max {maxValue.toFixed(1)} mm</span>
+				<span>Solid = historical, dashed = forecast</span>
+			</div>
+		</div>
+	);
+}
+
+function NdviLineChart({ series }: NdviChartProps) {
+	if (series.length < 2) {
+		return (
+			<div className="rounded-2xl border border-stone-100 bg-stone-50 p-6 text-sm text-stone-500">
+				Not enough NDVI data for a chart yet.
+			</div>
+		);
+	}
+
+	const values = series.map((point) => point.value);
+	const minValue = Math.min(...values);
+	const maxValue = Math.max(...values);
+	const range = Math.max(maxValue - minValue, 0.1);
+	const padding = 20;
+	const width = 640;
+	const height = 240;
+	const chartWidth = width - padding * 2;
+	const chartHeight = height - padding * 2;
+
+	const toPoint = (value: number, index: number) => {
+		const x = padding + (index / (series.length - 1)) * chartWidth;
+		const y = padding + (1 - (value - minValue) / range) * chartHeight;
+		return `${x},${y}`;
+	};
+
+	const firstForecastIndex = series.findIndex((point) => point.isForecast);
+	const splitIndex = firstForecastIndex === -1 ? series.length : firstForecastIndex;
+	const historical = series.slice(0, splitIndex);
+	const forecast = firstForecastIndex === -1 ? [] : series.slice(Math.max(splitIndex - 1, 0));
+	const historicalPath = historical.map((point, index) => toPoint(point.value, index)).join(" ");
+	const forecastPath = forecast
+		.map((point, index) => {
+			const absoluteIndex = index + Math.max(splitIndex - 1, 0);
+			return toPoint(point.value, absoluteIndex);
+		})
+		.join(" ");
+
+	return (
+		<div className="rounded-3xl border border-emerald-100 bg-white/90 p-6 shadow-sm">
+			<div className="flex flex-wrap items-center justify-between gap-3">
+				<div>
+					<h3 className="text-lg font-semibold text-stone-800">21-day NDVI pulse</h3>
+					<p className="text-sm text-stone-500">Vegetation strength trend.</p>
+				</div>
+				<span className="badge badge-outline border-emerald-200 text-emerald-700">Mock NDVI</span>
+			</div>
+			<div className="mt-4 overflow-hidden rounded-2xl border border-stone-100 bg-stone-50">
+				<svg viewBox={`0 0 ${width} ${height}`} className="h-56 w-full">
+					<defs>
+						<linearGradient id="ndviLine" x1="0" y1="0" x2="1" y2="1">
+							<stop offset="0%" stopColor="#16a34a" />
+							<stop offset="100%" stopColor="#84cc16" />
+						</linearGradient>
+					</defs>
+					<rect x="0" y="0" width={width} height={height} fill="#f8fafc" />
+					<polyline
+						points={historicalPath}
+						fill="none"
+						stroke="url(#ndviLine)"
+						strokeWidth="3"
+						strokeLinecap="round"
+						strokeLinejoin="round"
+					/>
+					{forecast.length > 1 ? (
+						<polyline
+							points={forecastPath}
+							fill="none"
+							stroke="#84cc16"
+							strokeWidth="3"
+							strokeDasharray="6 6"
+							strokeLinecap="round"
+							strokeLinejoin="round"
+						/>
+					) : null}
+				</svg>
+			</div>
+			<div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-stone-500">
+				<span>Min {minValue.toFixed(2)}</span>
+				<span>Max {maxValue.toFixed(2)}</span>
+				<span>Range 0.0 - 1.0</span>
+			</div>
+		</div>
+	);
+}
+
 export default function DashboardScreen() {
 	const repository = useFieldRepository();
 	const weatherService = useMemo(() => createOpenMeteoWeatherService(), []);
@@ -270,7 +498,7 @@ export default function DashboardScreen() {
 	const [draftField, setDraftField] = useState<DraftField | null>(null);
 	const [editDraft, setEditDraft] = useState<EditFieldDraft | null>(null);
 	const [draftError, setDraftError] = useState<string | null>(null);
-	const [forecast, setForecast] = useState<TemperaturePoint[] | null>(null);
+	const [weatherSeries, setWeatherSeries] = useState<DailyWeatherSeries | null>(null);
 	const [forecastStatus, setForecastStatus] = useState<"idle" | "loading" | "error">(
 		"idle"
 	);
@@ -305,10 +533,14 @@ export default function DashboardScreen() {
 	}, []);
 
 	const selectedField = fields.find((field) => field.id === selectedFieldId) ?? null;
+	const ndviSeries = selectedField ? getMockNdviSeries(selectedField.id) : [];
+	const ndviScore = selectedField ? getMockNdviScore(selectedField.id) : 0;
+	const ndviTone = getNdviTone(ndviScore);
+	const isNdviExcellent = ndviScore >= 0.8;
 
 	useEffect(() => {
 		if (!selectedField) {
-			setForecast(null);
+			setWeatherSeries(null);
 			setForecastStatus("idle");
 			return;
 		}
@@ -316,16 +548,16 @@ export default function DashboardScreen() {
 		const controller = new AbortController();
 		setForecastStatus("loading");
 		weatherService
-			.getTemperatureSeries(lat, lon)
+			.getDailySeries(lat, lon)
 			.then((data) => {
 				if (!controller.signal.aborted) {
-					setForecast(data);
+					setWeatherSeries(data);
 					setForecastStatus("idle");
 				}
 			})
 			.catch(() => {
 				if (!controller.signal.aborted) {
-					setForecast(null);
+					setWeatherSeries(null);
 					setForecastStatus("error");
 				}
 			});
@@ -523,6 +755,38 @@ export default function DashboardScreen() {
 
 	const overlayTitle = overlayMode === "create" ? "Add field" : "Update field";
 	const overlayCenter = overlayPolygon.length > 0 ? overlayPolygon[0] : mapCenter;
+	const temperaturePanel =
+		forecastStatus === "loading" ? (
+			<div className="rounded-2xl border border-stone-100 bg-stone-50 p-6 text-sm text-stone-500">
+				Loading weather data...
+			</div>
+		) : forecastStatus === "error" ? (
+			<div className="rounded-2xl border border-red-100 bg-red-50 p-6 text-sm text-red-600">
+				Unable to load forecast. Check your connection and try again.
+			</div>
+		) : weatherSeries && weatherSeries.temperature.length > 0 ? (
+			<WeatherLineChart series={weatherSeries.temperature} />
+		) : (
+			<div className="rounded-2xl border border-stone-100 bg-stone-50 p-6 text-sm text-stone-500">
+				Forecast data will appear once a field is selected.
+			</div>
+		);
+	const rainPanel =
+		forecastStatus === "loading" ? (
+			<div className="rounded-2xl border border-stone-100 bg-stone-50 p-6 text-sm text-stone-500">
+				Loading weather data...
+			</div>
+		) : forecastStatus === "error" ? (
+			<div className="rounded-2xl border border-red-100 bg-red-50 p-6 text-sm text-red-600">
+				Unable to load forecast. Check your connection and try again.
+			</div>
+		) : weatherSeries && weatherSeries.precipitation.length > 0 ? (
+			<RainLineChart series={weatherSeries.precipitation} />
+		) : (
+			<div className="rounded-2xl border border-stone-100 bg-stone-50 p-6 text-sm text-stone-500">
+				Rain data will appear once a field is selected.
+			</div>
+		);
 
 	return (
 		<div className="min-h-screen bg-gradient-to-br from-emerald-50 via-amber-50 to-white text-stone-900">
@@ -612,7 +876,7 @@ export default function DashboardScreen() {
 				</section>
 
 				{selectedField ? (
-					<div className="grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+					<div className="grid gap-8 lg:grid-cols-2">
 						<section className="rounded-3xl border border-emerald-100 bg-white/90 p-4 shadow-sm">
 							<div className="mb-3 flex flex-wrap items-center justify-between gap-2">
 								<div>
@@ -645,43 +909,50 @@ export default function DashboardScreen() {
 							</div>
 						</section>
 
-						<div className="flex flex-col gap-6">
-							<section className="rounded-3xl border border-emerald-100 bg-white/90 p-6 shadow-sm">
-								<h2 className="text-lg font-semibold text-stone-800">Field overview</h2>
-								<p className="text-sm text-stone-500">
-									{selectedField.crop} · {formatHa(selectedField.area)}
-								</p>
-								<div className="mt-4 grid gap-3 sm:grid-cols-2">
-									<div className="rounded-2xl border border-stone-100 bg-stone-50 p-4 text-sm text-stone-600">
-										<p className="font-semibold text-stone-700">Crop status</p>
-										<p className="mt-1">
-											{getMockCropStatus(selectedField.id)}
-										</p>
-									</div>
-									<div className="rounded-2xl border border-stone-100 bg-stone-50 p-4 text-sm text-stone-600">
-										<p className="font-semibold text-stone-700">Health score</p>
-										<p className="mt-1">{getMockHealthScore(selectedField.id)}</p>
-									</div>
+						<section className="rounded-3xl border border-emerald-100 bg-white/90 p-6 shadow-sm">
+							<h2 className="text-lg font-semibold text-stone-800">Field overview</h2>
+							<p className="text-sm text-stone-500">
+								{selectedField.crop} · {formatHa(selectedField.area)}
+							</p>
+							<div className="mt-4 grid gap-3 sm:grid-cols-2">
+								<div className="rounded-2xl border border-stone-100 bg-stone-50 p-4 text-sm text-stone-600">
+									<p className="font-semibold text-stone-700">Crop status</p>
+									<p className="mt-1">{getMockCropStatus(selectedField.id)}</p>
 								</div>
-							</section>
+								<div className="rounded-2xl border border-stone-100 bg-stone-50 p-4 text-sm text-stone-600">
+									<p className="font-semibold text-stone-700">Health score</p>
+									<p className="mt-1">{getMockHealthScore(selectedField.id)}</p>
+								</div>
+							</div>
+						</section>
 
-							<section>
-								{forecastStatus === "loading" ? (
-									<div className="rounded-2xl border border-stone-100 bg-stone-50 p-6 text-sm text-stone-500">
-										Loading weather data...
-									</div>
-								) : forecastStatus === "error" ? (
-									<div className="rounded-2xl border border-red-100 bg-red-50 p-6 text-sm text-red-600">
-										Unable to load forecast. Check your connection and try again.
-									</div>
-								) : forecast && forecast.length > 0 ? (
-									<WeatherLineChart series={forecast} />
-								) : (
-									<div className="rounded-2xl border border-stone-100 bg-stone-50 p-6 text-sm text-stone-500">
-										Forecast data will appear once a field is selected.
-									</div>
-								)}
-							</section>
+						{temperaturePanel}
+						{rainPanel}
+						<NdviLineChart series={ndviSeries} />
+						<div
+							className={`rounded-3xl border ${ndviTone.border} bg-gradient-to-br ${ndviTone.background} p-6 shadow-sm`}
+						>
+							<div className="flex items-start justify-between gap-4">
+								<div>
+									<p className="text-sm text-stone-500">NDVI score</p>
+									<p className={`mt-2 text-3xl font-semibold ${ndviTone.accent}`}>
+										{ndviScore.toFixed(2)}
+									</p>
+									<p className={`text-sm font-semibold ${ndviTone.accent}`}>{ndviTone.label}</p>
+								</div>
+								<div className="relative flex h-12 w-12 items-center justify-center">
+									<span
+										className={`absolute h-10 w-10 rounded-full ${ndviTone.ring} opacity-20 ${
+											isNdviExcellent ? "animate-pulse" : ""
+										}`}
+									/>
+									<span className={`relative h-3 w-3 rounded-full ${ndviTone.ring}`} />
+								</div>
+							</div>
+							<div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs text-stone-500">
+								<span>Scale 0.00 - 1.00</span>
+								<span>High vegetation vigor</span>
+							</div>
 						</div>
 					</div>
 				) : null}
