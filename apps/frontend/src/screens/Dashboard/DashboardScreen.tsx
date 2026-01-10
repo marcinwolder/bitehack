@@ -95,6 +95,22 @@ type MapDrawControlsProps = {
 	onEdited: (event: L.DrawEvents.Edited) => void;
 };
 
+const getPolygonFromFeatureGroup = (featureGroup: L.FeatureGroup | null) => {
+	if (!featureGroup) {
+		return null;
+	}
+	let polygonPoints: LatLngTuple[] | null = null;
+	featureGroup.eachLayer((layer) => {
+		if (polygonPoints || !(layer instanceof L.Polygon)) {
+			return;
+		}
+		const latLngs = layer.getLatLngs();
+		const ring = Array.isArray(latLngs[0]) ? (latLngs[0] as L.LatLng[]) : [];
+		polygonPoints = ring.map((latLng) => [latLng.lat, latLng.lng] as LatLngTuple);
+	});
+	return polygonPoints;
+};
+
 function MapDrawControls({
 	featureGroup,
 	allowDraw,
@@ -449,24 +465,45 @@ export default function DashboardScreen() {
 		if (!selectedField || !editDraft) {
 			return;
 		}
-		const parsedArea = Number.parseFloat(editDraft.area);
-		if (!editDraft.name.trim() || !editDraft.crop) {
+		if (!editDraft.name.trim()) {
+			setDraftError("Field name is required.");
 			return;
 		}
-		if (Number.isNaN(parsedArea) || parsedArea < MIN_AREA_HA) {
+		if (!editDraft.crop) {
+			setDraftError("Select a crop for this field.");
+			return;
+		}
+		const featurePolygon = getPolygonFromFeatureGroup(overlayFeatureGroup);
+		const polygonToSave =
+			featurePolygon && featurePolygon.length > 0
+				? featurePolygon
+				: overlayPolygon.length > 0
+					? overlayPolygon
+					: selectedField.polygon;
+		if (polygonToSave.length < 3) {
+			setDraftError("Add a valid field polygon before saving.");
+			return;
+		}
+		const nextArea = calculateAreaHa(polygonToSave);
+		if (nextArea < MIN_AREA_HA) {
+			setDraftError("Polygon is too small. Try a larger field area.");
 			return;
 		}
 		const updatedField: Field = {
 			...selectedField,
 			name: editDraft.name.trim(),
 			crop: editDraft.crop,
-			area: parsedArea,
-			polygon: overlayPolygon.length > 0 ? overlayPolygon : selectedField.polygon,
+			area: nextArea,
+			polygon: polygonToSave,
 			updatedAt: new Date().toISOString()
 		};
 		await repository.update(updatedField);
 		setFields((prev) => prev.map((field) => (field.id === updatedField.id ? updatedField : field)));
 		setSelectedFieldId(updatedField.id);
+		setEditDraft((prev) =>
+			prev ? { ...prev, area: nextArea.toFixed(2) } : prev
+		);
+		setDraftError(null);
 		closeOverlay();
 	};
 
