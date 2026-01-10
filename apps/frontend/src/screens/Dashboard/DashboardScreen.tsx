@@ -90,7 +90,7 @@ type MapDrawControlsProps = {
 	featureGroup: L.FeatureGroup | null;
 	allowDraw: boolean;
 	allowEdit: boolean;
-	layerCount: number;
+	layerSignature: string;
 	onCreated: (event: L.LeafletEvent) => void;
 	onEdited: (event: L.DrawEvents.Edited) => void;
 };
@@ -115,7 +115,7 @@ function MapDrawControls({
 	featureGroup,
 	allowDraw,
 	allowEdit,
-	layerCount,
+	layerSignature,
 	onCreated,
 	onEdited
 }: MapDrawControlsProps) {
@@ -158,7 +158,7 @@ function MapDrawControls({
 			map.off(L.Draw.Event.EDITED, onEdited);
 			map.removeControl(control);
 		};
-	}, [allowDraw, allowEdit, featureGroup, layerCount, map, onCreated, onEdited]);
+	}, [allowDraw, allowEdit, featureGroup, layerSignature, map, onCreated, onEdited]);
 
 	return null;
 }
@@ -280,6 +280,10 @@ export default function DashboardScreen() {
 	const [overlayPolygon, setOverlayPolygon] = useState<LatLngTuple[]>([]);
 	const [overlayEditEnabled, setOverlayEditEnabled] = useState(false);
 	const [overlayFeatureGroup, setOverlayFeatureGroup] = useState<L.FeatureGroup | null>(null);
+	const overlayPolygonSignature = useMemo(
+		() => overlayPolygon.map(([lat, lng]) => `${lat},${lng}`).join("|"),
+		[overlayPolygon]
+	);
 
 	useEffect(() => {
 		repository.list(MOCK_USER_ID).then(setFields);
@@ -370,6 +374,8 @@ export default function DashboardScreen() {
 		setIsOverlayOpen(false);
 		setDraftError(null);
 		setOverlayEditEnabled(false);
+		setOverlayPolygon([]);
+		setOverlayFeatureGroup(null);
 	};
 
 	const handleCreated = (event: L.LeafletEvent) => {
@@ -720,7 +726,7 @@ export default function DashboardScreen() {
 											featureGroup={overlayFeatureGroup}
 											allowDraw={overlayMode === "create"}
 											allowEdit={overlayMode === "edit" ? overlayEditEnabled : overlayPolygon.length > 0}
-											layerCount={overlayPolygon.length}
+											layerSignature={overlayPolygonSignature}
 											onCreated={handleCreated}
 											onEdited={handleEdited}
 										/>
