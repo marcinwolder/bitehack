@@ -90,6 +90,7 @@ type MapDrawControlsProps = {
 	featureGroup: L.FeatureGroup | null;
 	allowDraw: boolean;
 	allowEdit: boolean;
+	layerCount: number;
 	onCreated: (event: L.LeafletEvent) => void;
 	onEdited: (event: L.DrawEvents.Edited) => void;
 };
@@ -98,6 +99,7 @@ function MapDrawControls({
 	featureGroup,
 	allowDraw,
 	allowEdit,
+	layerCount,
 	onCreated,
 	onEdited
 }: MapDrawControlsProps) {
@@ -140,7 +142,7 @@ function MapDrawControls({
 			map.off(L.Draw.Event.EDITED, onEdited);
 			map.removeControl(control);
 		};
-	}, [allowDraw, allowEdit, featureGroup, map, onCreated, onEdited]);
+	}, [allowDraw, allowEdit, featureGroup, layerCount, map, onCreated, onEdited]);
 
 	return null;
 }
@@ -669,7 +671,7 @@ export default function DashboardScreen() {
 											attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 											url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
 										/>
-										<FeatureGroup whenCreated={setOverlayFeatureGroup}>
+										<FeatureGroup ref={setOverlayFeatureGroup}>
 											{overlayPolygon.length > 0 ? (
 												<Polygon
 													positions={overlayPolygon}
@@ -681,6 +683,7 @@ export default function DashboardScreen() {
 											featureGroup={overlayFeatureGroup}
 											allowDraw={overlayMode === "create"}
 											allowEdit={overlayMode === "edit" ? overlayEditEnabled : overlayPolygon.length > 0}
+											layerCount={overlayPolygon.length}
 											onCreated={handleCreated}
 											onEdited={handleEdited}
 										/>
