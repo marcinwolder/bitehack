@@ -1,0 +1,3 @@
+POSTGRES_USER=bitehack
+POSTGRES_PASSWORD=bitehack
+POSTGRES_DB=bitehack_db
