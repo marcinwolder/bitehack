@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import type { MutableRefObject } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FeatureGroup, MapContainer, Polygon, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import area from "@turf/area";
@@ -88,7 +87,7 @@ const createId = () => {
 };
 
 type MapDrawControlsProps = {
-	featureGroupRef: MutableRefObject<L.FeatureGroup | null>;
+	featureGroup: L.FeatureGroup | null;
 	allowDraw: boolean;
 	allowEdit: boolean;
 	onCreated: (event: L.LeafletEvent) => void;
@@ -96,7 +95,7 @@ type MapDrawControlsProps = {
 };
 
 function MapDrawControls({
-	featureGroupRef,
+	featureGroup,
 	allowDraw,
 	allowEdit,
 	onCreated,
@@ -105,7 +104,7 @@ function MapDrawControls({
 	const map = useMap();
 
 	useEffect(() => {
-		if (!featureGroupRef.current) {
+		if (!featureGroup) {
 			return;
 		}
 
@@ -126,7 +125,7 @@ function MapDrawControls({
 				circlemarker: false
 			},
 			edit: {
-				featureGroup: featureGroupRef.current,
+				featureGroup,
 				edit: allowEdit ? {} : false,
 				remove: false
 			}
@@ -141,7 +140,7 @@ function MapDrawControls({
 			map.off(L.Draw.Event.EDITED, onEdited);
 			map.removeControl(control);
 		};
-	}, [allowDraw, allowEdit, featureGroupRef, map, onCreated, onEdited]);
+	}, [allowDraw, allowEdit, featureGroup, map, onCreated, onEdited]);
 
 	return null;
 }
@@ -262,7 +261,7 @@ export default function DashboardScreen() {
 	const [overlayMode, setOverlayMode] = useState<"create" | "edit">("create");
 	const [overlayPolygon, setOverlayPolygon] = useState<LatLngTuple[]>([]);
 	const [overlayEditEnabled, setOverlayEditEnabled] = useState(false);
-	const overlayFeatureGroupRef = useRef<L.FeatureGroup | null>(null);
+	const [overlayFeatureGroup, setOverlayFeatureGroup] = useState<L.FeatureGroup | null>(null);
 
 	useEffect(() => {
 		repository.list(MOCK_USER_ID).then(setFields);
@@ -322,22 +321,6 @@ export default function DashboardScreen() {
 			area: selectedField.area.toFixed(2)
 		});
 	}, [selectedField]);
-
-	useEffect(() => {
-		if (!overlayFeatureGroupRef.current) {
-			return;
-		}
-		const featureGroup = overlayFeatureGroupRef.current;
-		featureGroup.clearLayers();
-		if (overlayPolygon.length > 0) {
-			const polygonLayer = L.polygon(overlayPolygon, {
-				color: "#16a34a",
-				weight: 2,
-				fillOpacity: 0.2
-			});
-			featureGroup.addLayer(polygonLayer);
-		}
-	}, [overlayPolygon]);
 
 	const openCreateOverlay = () => {
 		setOverlayMode("create");
@@ -686,9 +669,16 @@ export default function DashboardScreen() {
 											attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 											url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
 										/>
-										<FeatureGroup ref={overlayFeatureGroupRef} />
+										<FeatureGroup whenCreated={setOverlayFeatureGroup}>
+											{overlayPolygon.length > 0 ? (
+												<Polygon
+													positions={overlayPolygon}
+													pathOptions={{ color: "#16a34a", weight: 2, fillOpacity: 0.2 }}
+												/>
+											) : null}
+										</FeatureGroup>
 										<MapDrawControls
-											featureGroupRef={overlayFeatureGroupRef}
+											featureGroup={overlayFeatureGroup}
 											allowDraw={overlayMode === "create"}
 											allowEdit={overlayMode === "edit" ? overlayEditEnabled : overlayPolygon.length > 0}
 											onCreated={handleCreated}
