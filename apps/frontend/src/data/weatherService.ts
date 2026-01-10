@@ -1,28 +1,31 @@
-export type ForecastDay = {
+export type TemperaturePoint = {
 	date: string;
-	minTemp: number;
-	maxTemp: number;
-	precipitation: number;
+	temperature: number;
+	isForecast: boolean;
 };
 
 export type WeatherService = {
-	getForecast: (lat: number, lon: number) => Promise<ForecastDay[]>;
+	getTemperatureSeries: (lat: number, lon: number) => Promise<TemperaturePoint[]>;
 };
 
-const buildForecastUrl = (lat: number, lon: number) => {
+const HISTORICAL_DAYS = 7;
+const FORECAST_DAYS = 14;
+
+const buildTemperatureUrl = (lat: number, lon: number) => {
 	const params = new URLSearchParams({
 		latitude: lat.toString(),
 		longitude: lon.toString(),
-		daily: "temperature_2m_max,temperature_2m_min,precipitation_sum",
-		forecast_days: "14",
+		daily: "temperature_2m_mean",
+		past_days: HISTORICAL_DAYS.toString(),
+		forecast_days: FORECAST_DAYS.toString(),
 		timezone: "auto"
 	});
 	return `https://api.open-meteo.com/v1/forecast?${params.toString()}`;
 };
 
 export const createOpenMeteoWeatherService = (): WeatherService => ({
-	async getForecast(lat, lon) {
-		const response = await fetch(buildForecastUrl(lat, lon));
+	async getTemperatureSeries(lat, lon) {
+		const response = await fetch(buildTemperatureUrl(lat, lon));
 		if (!response.ok) {
 			throw new Error("Weather request failed");
 		}
@@ -32,9 +35,8 @@ export const createOpenMeteoWeatherService = (): WeatherService => ({
 		}
 		return data.daily.time.map((date: string, index: number) => ({
 			date,
-			minTemp: data.daily.temperature_2m_min?.[index] ?? 0,
-			maxTemp: data.daily.temperature_2m_max?.[index] ?? 0,
-			precipitation: data.daily.precipitation_sum?.[index] ?? 0
+			temperature: data.daily.temperature_2m_mean?.[index] ?? 0,
+			isForecast: index >= HISTORICAL_DAYS
 		}));
 	}
 });
