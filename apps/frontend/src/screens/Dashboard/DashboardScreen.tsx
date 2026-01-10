@@ -361,7 +361,7 @@ export default function DashboardScreen() {
 			area: field.area.toFixed(2)
 		});
 		setDraftError(null);
-		setOverlayEditEnabled(false);
+		setOverlayEditEnabled(true);
 		setIsOverlayOpen(true);
 	};
 
@@ -660,7 +660,7 @@ export default function DashboardScreen() {
 			</div>
 
 			{isOverlayOpen ? (
-				<div className="fixed inset-0 z-40 flex items-center justify-center bg-stone-900/40 p-4">
+				<div className="fixed inset-0 z-[1200] flex items-center justify-center bg-stone-900/40 p-4">
 					<div className="max-h-[90vh] w-full max-w-5xl overflow-hidden rounded-3xl bg-white shadow-2xl">
 						<div className="flex flex-wrap items-center justify-between gap-3 border-b border-stone-100 px-6 py-4">
 							<div>
