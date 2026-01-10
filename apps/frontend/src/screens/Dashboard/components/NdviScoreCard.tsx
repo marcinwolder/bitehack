@@ -1,4 +1,4 @@
-type NdviTone = {
+export type NdviTone = {
 	label: string;
 	accent: string;
 	border: string;

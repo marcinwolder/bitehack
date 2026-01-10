@@ -12,7 +12,6 @@ import FieldListPanel from "./components/FieldListPanel";
 import FieldMap from "./components/FieldMap";
 import FieldOverlayModal from "./components/FieldOverlayModal";
 import FieldSummaryPanel from "./components/FieldSummaryPanel";
-import NdviScoreCard from "./components/NdviScoreCard";
 import WeatherPanels from "./components/WeatherPanels";
 import type { DraftField, EditFieldDraft } from "./types";
 import {
@@ -344,25 +343,23 @@ export default function DashboardScreen() {
 
 				{selectedField ? (
 					<div className="flex flex-col gap-8">
-						<NdviScoreCard
-							ndviScore={ndviScore}
-							ndviTone={ndviTone}
-							isNdviExcellent={isNdviExcellent}
-						/>
-
-						<div className="grid gap-8 lg:grid-cols-2 xl:grid-cols-[minmax(0,2.2fr)_minmax(0,1.1fr)_minmax(0,0.85fr)]">
-							<FieldMap
-								selectedField={selectedField}
-								mapCenter={mapCenter}
-								onEdit={() => openEditOverlay(selectedField)}
-							/>
+						<div className="grid gap-8 lg:grid-cols-3">
+							<div className="lg:col-span-2">
+								<FieldMap
+									selectedField={selectedField}
+									mapCenter={mapCenter}
+									onEdit={() => openEditOverlay(selectedField)}
+								/>
+							</div>
 							<FieldSummaryPanel
 								selectedField={selectedField}
-								ndviSeries={ndviSeries}
+								ndviScore={ndviScore}
+								ndviTone={ndviTone}
+								isNdviExcellent={isNdviExcellent}
 							/>
 						</div>
 
-						<div className="grid gap-8 lg:grid-cols-3">
+						<div className="grid gap-8">
 							<WeatherPanels
 								forecastStatus={forecastStatus}
 								weatherSeries={weatherSeries}

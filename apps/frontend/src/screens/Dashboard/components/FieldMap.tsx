@@ -28,7 +28,7 @@ export default function FieldMap({
 					Edit field
 				</button>
 			</div>
-			<div className="h-[360px] flex-1 overflow-hidden rounded-2xl border border-emerald-100 md:h-[520px] xl:h-full">
+			<div className="h-[420px] flex-1 overflow-hidden rounded-2xl border border-emerald-100 md:h-[640px] xl:h-full">
 				<MapContainer
 					center={mapCenter}
 					zoom={13}

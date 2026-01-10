@@ -64,7 +64,11 @@ export default function WeatherLineChart({ series }: WeatherChartProps) {
 				</div>
 			</div>
 			<div className="mt-4 overflow-hidden rounded-2xl border border-stone-100 bg-stone-50">
-				<svg viewBox={`0 0 ${width} ${height}`} className="h-56 w-full">
+				<svg
+					viewBox={`0 0 ${width} ${height}`}
+					preserveAspectRatio="none"
+					className="h-56 w-full"
+				>
 					<defs>
 						<linearGradient
 							id="tempLine"

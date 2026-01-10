@@ -1,16 +1,19 @@
 import type { Field } from "../../data/fieldRepository";
-import NdviLineChart from "./NdviLineChart";
-import type { NdviPoint } from "../types";
 import { formatHa } from "../utils";
+import NdviScoreCard, { type NdviTone } from "./NdviScoreCard";
 
 type FieldSummaryPanelProps = {
 	selectedField: Field;
-	ndviSeries: NdviPoint[];
+	ndviScore: number;
+	ndviTone: NdviTone;
+	isNdviExcellent: boolean;
 };
 
 export default function FieldSummaryPanel({
 	selectedField,
-	ndviSeries,
+	ndviScore,
+	ndviTone,
+	isNdviExcellent,
 }: FieldSummaryPanelProps) {
 	return (
 		<div className="flex flex-col gap-4">
@@ -36,6 +39,11 @@ export default function FieldSummaryPanel({
 					Current planted area
 				</p>
 			</div>
+			<NdviScoreCard
+				ndviScore={ndviScore}
+				ndviTone={ndviTone}
+				isNdviExcellent={isNdviExcellent}
+			/>
 		</div>
 	);
 }
