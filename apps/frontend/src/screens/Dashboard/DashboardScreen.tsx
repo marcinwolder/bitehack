@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { FeatureGroup, MapContainer, Polygon, TileLayer, useMap } from "react-leaflet";
+import {
+	FeatureGroup,
+	MapContainer,
+	Polygon,
+	TileLayer,
+	useMap,
+} from "react-leaflet";
 import L from "leaflet";
 import area from "@turf/area";
 import centroid from "@turf/centroid";
@@ -7,12 +13,16 @@ import { polygon } from "@turf/helpers";
 import { useFieldRepository } from "../../data/fieldRepositoryContext";
 import type { Field, LatLngTuple } from "../../data/fieldRepository";
 import { createOpenMeteoWeatherService } from "../../data/weatherService";
-import type { DailyWeatherSeries, PrecipitationPoint, TemperaturePoint } from "../../data/weatherService";
+import type {
+	DailyWeatherSeries,
+	PrecipitationPoint,
+	TemperaturePoint,
+} from "../../data/weatherService";
 import {
 	getMockCropStatus,
 	getMockHealthScore,
 	getMockNdviScore,
-	getMockNdviSeries
+	getMockNdviSeries,
 } from "../../data/mockCropMetrics";
 
 const MOCK_USER_ID = 1;
@@ -34,7 +44,7 @@ const CROP_OPTIONS = [
 	"Canola (Rapeseed)",
 	"Sugarcane",
 	"Alfalfa",
-	"Other"
+	"Other",
 ];
 
 type DraftField = {
@@ -105,7 +115,7 @@ const getNdviTone = (score: number) => {
 			accent: "text-emerald-700",
 			border: "border-emerald-200",
 			background: "from-emerald-50 via-white to-white",
-			ring: "bg-emerald-400"
+			ring: "bg-emerald-400",
 		};
 	}
 	if (score >= 0.6) {
@@ -114,7 +124,7 @@ const getNdviTone = (score: number) => {
 			accent: "text-lime-700",
 			border: "border-lime-200",
 			background: "from-lime-50 via-white to-white",
-			ring: "bg-lime-400"
+			ring: "bg-lime-400",
 		};
 	}
 	if (score >= 0.4) {
@@ -123,7 +133,7 @@ const getNdviTone = (score: number) => {
 			accent: "text-amber-700",
 			border: "border-amber-200",
 			background: "from-amber-50 via-white to-white",
-			ring: "bg-amber-400"
+			ring: "bg-amber-400",
 		};
 	}
 	return {
@@ -131,7 +141,7 @@ const getNdviTone = (score: number) => {
 		accent: "text-rose-700",
 		border: "border-rose-200",
 		background: "from-rose-50 via-white to-white",
-		ring: "bg-rose-400"
+		ring: "bg-rose-400",
 	};
 };
 
@@ -161,8 +171,12 @@ const getPolygonFromFeatureGroup = (featureGroup: L.FeatureGroup | null) => {
 			return;
 		}
 		const latLngs = layer.getLatLngs();
-		const ring = Array.isArray(latLngs[0]) ? (latLngs[0] as L.LatLng[]) : [];
-		polygonPoints = ring.map((latLng) => [latLng.lat, latLng.lng] as LatLngTuple);
+		const ring = Array.isArray(latLngs[0])
+			? (latLngs[0] as L.LatLng[])
+			: [];
+		polygonPoints = ring.map(
+			(latLng) => [latLng.lat, latLng.lng] as LatLngTuple
+		);
 	});
 	return polygonPoints;
 };
@@ -173,7 +187,7 @@ function MapDrawControls({
 	allowEdit,
 	layerSignature,
 	onCreated,
-	onEdited
+	onEdited,
 }: MapDrawControlsProps) {
 	const map = useMap();
 
@@ -189,20 +203,20 @@ function MapDrawControls({
 					? {
 							allowIntersection: false,
 							showArea: false,
-							shapeOptions: { color: "#16a34a" }
-						}
+							shapeOptions: { color: "#16a34a" },
+					  }
 					: false,
 				polyline: false,
 				rectangle: false,
 				circle: false,
 				marker: false,
-				circlemarker: false
+				circlemarker: false,
 			},
 			edit: {
 				featureGroup,
 				edit: allowEdit ? {} : false,
-				remove: false
-			}
+				remove: false,
+			},
 		});
 
 		map.addControl(control);
@@ -214,7 +228,15 @@ function MapDrawControls({
 			map.off(L.Draw.Event.EDITED, onEdited);
 			map.removeControl(control);
 		};
-	}, [allowDraw, allowEdit, featureGroup, layerSignature, map, onCreated, onEdited]);
+	}, [
+		allowDraw,
+		allowEdit,
+		featureGroup,
+		layerSignature,
+		map,
+		onCreated,
+		onEdited,
+	]);
 
 	return null;
 }
@@ -234,7 +256,10 @@ function FitBounds({ polygonPoints }: { polygonPoints: LatLngTuple[] | null }) {
 }
 
 const formatShortDate = (value: string) =>
-	new Date(value).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+	new Date(value).toLocaleDateString(undefined, {
+		month: "short",
+		day: "numeric",
+	});
 
 function WeatherLineChart({ series }: WeatherChartProps) {
 	if (series.length < 2) {
@@ -262,10 +287,16 @@ function WeatherLineChart({ series }: WeatherChartProps) {
 	};
 
 	const firstForecastIndex = series.findIndex((point) => point.isForecast);
-	const splitIndex = firstForecastIndex === -1 ? series.length : firstForecastIndex;
+	const splitIndex =
+		firstForecastIndex === -1 ? series.length : firstForecastIndex;
 	const historical = series.slice(0, splitIndex);
-	const forecast = firstForecastIndex === -1 ? [] : series.slice(Math.max(splitIndex - 1, 0));
-	const historicalPath = historical.map((point, index) => toPoint(point.temperature, index)).join(" ");
+	const forecast =
+		firstForecastIndex === -1
+			? []
+			: series.slice(Math.max(splitIndex - 1, 0));
+	const historicalPath = historical
+		.map((point, index) => toPoint(point.temperature, index))
+		.join(" ");
 	const forecastPath = forecast
 		.map((point, index) => {
 			const absoluteIndex = index + Math.max(splitIndex - 1, 0);
@@ -278,23 +309,41 @@ function WeatherLineChart({ series }: WeatherChartProps) {
 		<div className="rounded-3xl border border-emerald-100 bg-white/90 p-6 shadow-sm">
 			<div className="flex flex-wrap items-center justify-between gap-3">
 				<div>
-					<h3 className="text-lg font-semibold text-stone-800">Temperature</h3>
-					<p className="text-sm text-stone-500">Last 7 days vs. next 14 days.</p>
+					<h3 className="text-lg font-semibold text-stone-800">
+						Temperature
+					</h3>
+					<p className="text-sm text-stone-500">
+						Last 7 days vs. next 14 days.
+					</p>
 				</div>
 				<div className="flex items-center gap-2">
-					<span className="badge badge-outline border-emerald-200 text-emerald-700">Open-Meteo</span>
+					<span className="badge badge-outline border-emerald-200 text-emerald-700">
+						Open-Meteo
+					</span>
 					<span className="badge badge-ghost text-stone-500">°C</span>
 				</div>
 			</div>
 			<div className="mt-4 overflow-hidden rounded-2xl border border-stone-100 bg-stone-50">
 				<svg viewBox={`0 0 ${width} ${height}`} className="h-56 w-full">
 					<defs>
-						<linearGradient id="tempLine" x1="0" y1="0" x2="1" y2="1">
+						<linearGradient
+							id="tempLine"
+							x1="0"
+							y1="0"
+							x2="1"
+							y2="1"
+						>
 							<stop offset="0%" stopColor="#059669" />
 							<stop offset="100%" stopColor="#0ea5e9" />
 						</linearGradient>
 					</defs>
-					<rect x="0" y="0" width={width} height={height} fill="#f8fafc" />
+					<rect
+						x="0"
+						y="0"
+						width={width}
+						height={height}
+						fill="#f8fafc"
+					/>
 					<polyline
 						points={historicalPath}
 						fill="none"
@@ -356,9 +405,13 @@ function RainLineChart({ series }: RainChartProps) {
 	};
 
 	const firstForecastIndex = series.findIndex((point) => point.isForecast);
-	const splitIndex = firstForecastIndex === -1 ? series.length : firstForecastIndex;
+	const splitIndex =
+		firstForecastIndex === -1 ? series.length : firstForecastIndex;
 	const historical = series.slice(0, splitIndex);
-	const forecast = firstForecastIndex === -1 ? [] : series.slice(Math.max(splitIndex - 1, 0));
+	const forecast =
+		firstForecastIndex === -1
+			? []
+			: series.slice(Math.max(splitIndex - 1, 0));
 	const historicalPath = historical
 		.map((point, index) => toPoint(point.precipitation, index))
 		.join(" ");
@@ -374,23 +427,41 @@ function RainLineChart({ series }: RainChartProps) {
 		<div className="rounded-3xl border border-sky-100 bg-white/90 p-6 shadow-sm">
 			<div className="flex flex-wrap items-center justify-between gap-3">
 				<div>
-					<h3 className="text-lg font-semibold text-stone-800">Rainfall</h3>
-					<p className="text-sm text-stone-500">Last 7 days vs. next 14 days.</p>
+					<h3 className="text-lg font-semibold text-stone-800">
+						Rainfall
+					</h3>
+					<p className="text-sm text-stone-500">
+						Last 7 days vs. next 14 days.
+					</p>
 				</div>
 				<div className="flex items-center gap-2">
-					<span className="badge badge-outline border-sky-200 text-sky-700">Open-Meteo</span>
+					<span className="badge badge-outline border-sky-200 text-sky-700">
+						Open-Meteo
+					</span>
 					<span className="badge badge-ghost text-stone-500">mm</span>
 				</div>
 			</div>
 			<div className="mt-4 overflow-hidden rounded-2xl border border-stone-100 bg-stone-50">
 				<svg viewBox={`0 0 ${width} ${height}`} className="h-56 w-full">
 					<defs>
-						<linearGradient id="rainLine" x1="0" y1="0" x2="1" y2="1">
+						<linearGradient
+							id="rainLine"
+							x1="0"
+							y1="0"
+							x2="1"
+							y2="1"
+						>
 							<stop offset="0%" stopColor="#0ea5e9" />
 							<stop offset="100%" stopColor="#38bdf8" />
 						</linearGradient>
 					</defs>
-					<rect x="0" y="0" width={width} height={height} fill="#f8fafc" />
+					<rect
+						x="0"
+						y="0"
+						width={width}
+						height={height}
+						fill="#f8fafc"
+					/>
 					<polyline
 						points={historicalPath}
 						fill="none"
@@ -452,10 +523,16 @@ function NdviLineChart({ series }: NdviChartProps) {
 	};
 
 	const firstForecastIndex = series.findIndex((point) => point.isForecast);
-	const splitIndex = firstForecastIndex === -1 ? series.length : firstForecastIndex;
+	const splitIndex =
+		firstForecastIndex === -1 ? series.length : firstForecastIndex;
 	const historical = series.slice(0, splitIndex);
-	const forecast = firstForecastIndex === -1 ? [] : series.slice(Math.max(splitIndex - 1, 0));
-	const historicalPath = historical.map((point, index) => toPoint(point.value, index)).join(" ");
+	const forecast =
+		firstForecastIndex === -1
+			? []
+			: series.slice(Math.max(splitIndex - 1, 0));
+	const historicalPath = historical
+		.map((point, index) => toPoint(point.value, index))
+		.join(" ");
 	const forecastPath = forecast
 		.map((point, index) => {
 			const absoluteIndex = index + Math.max(splitIndex - 1, 0);
@@ -468,23 +545,43 @@ function NdviLineChart({ series }: NdviChartProps) {
 		<div className="rounded-3xl border border-emerald-100 bg-white/90 p-6 shadow-sm">
 			<div className="flex flex-wrap items-center justify-between gap-3">
 				<div>
-					<h3 className="text-lg font-semibold text-stone-800">NDVI</h3>
-					<p className="text-sm text-stone-500">Vegetation strength trend.</p>
+					<h3 className="text-lg font-semibold text-stone-800">
+						NDVI
+					</h3>
+					<p className="text-sm text-stone-500">
+						Vegetation strength trend.
+					</p>
 				</div>
 				<div className="flex items-center gap-2">
-					<span className="badge badge-outline border-emerald-200 text-emerald-700">Mock NDVI</span>
-					<span className="badge badge-ghost text-stone-500">Index</span>
+					<span className="badge badge-outline border-emerald-200 text-emerald-700">
+						Mock NDVI
+					</span>
+					<span className="badge badge-ghost text-stone-500">
+						Index
+					</span>
 				</div>
 			</div>
 			<div className="mt-4 overflow-hidden rounded-2xl border border-stone-100 bg-stone-50">
 				<svg viewBox={`0 0 ${width} ${height}`} className="h-56 w-full">
 					<defs>
-						<linearGradient id="ndviLine" x1="0" y1="0" x2="1" y2="1">
+						<linearGradient
+							id="ndviLine"
+							x1="0"
+							y1="0"
+							x2="1"
+							y2="1"
+						>
 							<stop offset="0%" stopColor="#16a34a" />
 							<stop offset="100%" stopColor="#84cc16" />
 						</linearGradient>
 					</defs>
-					<rect x="0" y="0" width={width} height={height} fill="#f8fafc" />
+					<rect
+						x="0"
+						y="0"
+						width={width}
+						height={height}
+						fill="#f8fafc"
+					/>
 					<polyline
 						points={historicalPath}
 						fill="none"
@@ -528,16 +625,18 @@ export default function DashboardScreen() {
 	const [draftField, setDraftField] = useState<DraftField | null>(null);
 	const [editDraft, setEditDraft] = useState<EditFieldDraft | null>(null);
 	const [draftError, setDraftError] = useState<string | null>(null);
-	const [weatherSeries, setWeatherSeries] = useState<DailyWeatherSeries | null>(null);
-	const [forecastStatus, setForecastStatus] = useState<"idle" | "loading" | "error">(
-		"idle"
-	);
+	const [weatherSeries, setWeatherSeries] =
+		useState<DailyWeatherSeries | null>(null);
+	const [forecastStatus, setForecastStatus] = useState<
+		"idle" | "loading" | "error"
+	>("idle");
 	const [mapCenter, setMapCenter] = useState<LatLngTuple>(WARSAW_CENTER);
 	const [isOverlayOpen, setIsOverlayOpen] = useState(false);
 	const [overlayMode, setOverlayMode] = useState<"create" | "edit">("create");
 	const [overlayPolygon, setOverlayPolygon] = useState<LatLngTuple[]>([]);
 	const [overlayEditEnabled, setOverlayEditEnabled] = useState(false);
-	const [overlayFeatureGroup, setOverlayFeatureGroup] = useState<L.FeatureGroup | null>(null);
+	const [overlayFeatureGroup, setOverlayFeatureGroup] =
+		useState<L.FeatureGroup | null>(null);
 	const overlayPolygonSignature = useMemo(
 		() => overlayPolygon.map(([lat, lng]) => `${lat},${lng}`).join("|"),
 		[overlayPolygon]
@@ -553,7 +652,10 @@ export default function DashboardScreen() {
 		}
 		navigator.geolocation.getCurrentPosition(
 			(position) => {
-				setMapCenter([position.coords.latitude, position.coords.longitude]);
+				setMapCenter([
+					position.coords.latitude,
+					position.coords.longitude,
+				]);
 			},
 			() => {
 				setMapCenter(WARSAW_CENTER);
@@ -562,7 +664,8 @@ export default function DashboardScreen() {
 		);
 	}, []);
 
-	const selectedField = fields.find((field) => field.id === selectedFieldId) ?? null;
+	const selectedField =
+		fields.find((field) => field.id === selectedFieldId) ?? null;
 	const ndviSeries = selectedField ? getMockNdviSeries(selectedField.id) : [];
 	const ndviScore = selectedField ? getMockNdviScore(selectedField.id) : 0;
 	const ndviTone = getNdviTone(ndviScore);
@@ -602,7 +705,7 @@ export default function DashboardScreen() {
 		setEditDraft({
 			name: selectedField.name,
 			crop: selectedField.crop,
-			area: selectedField.area.toFixed(2)
+			area: selectedField.area.toFixed(2),
 		});
 	}, [selectedField]);
 
@@ -625,7 +728,7 @@ export default function DashboardScreen() {
 		setEditDraft({
 			name: field.name,
 			crop: field.crop,
-			area: field.area.toFixed(2)
+			area: field.area.toFixed(2),
 		});
 		setDraftError(null);
 		setOverlayEditEnabled(true);
@@ -646,8 +749,12 @@ export default function DashboardScreen() {
 			return;
 		}
 		const latLngs = layer.getLatLngs();
-		const ring = Array.isArray(latLngs[0]) ? (latLngs[0] as L.LatLng[]) : [];
-		const points = ring.map((latLng) => [latLng.lat, latLng.lng] as LatLngTuple);
+		const ring = Array.isArray(latLngs[0])
+			? (latLngs[0] as L.LatLng[])
+			: [];
+		const points = ring.map(
+			(latLng) => [latLng.lat, latLng.lng] as LatLngTuple
+		);
 		layer.remove();
 		const calculatedArea = calculateAreaHa(points);
 		if (calculatedArea < MIN_AREA_HA) {
@@ -660,16 +767,16 @@ export default function DashboardScreen() {
 				? {
 						...prev,
 						polygon: points,
-						area: calculatedArea
-					}
+						area: calculatedArea,
+				  }
 				: prev
 		);
 		setEditDraft((prev) =>
 			prev
 				? {
 						...prev,
-						area: calculatedArea.toFixed(2)
-					}
+						area: calculatedArea.toFixed(2),
+				  }
 				: prev
 		);
 		setDraftError(null);
@@ -683,16 +790,24 @@ export default function DashboardScreen() {
 				return;
 			}
 			const latLngs = layer.getLatLngs();
-			const ring = Array.isArray(latLngs[0]) ? (latLngs[0] as L.LatLng[]) : [];
-			updatedPolygon = ring.map((latLng) => [latLng.lat, latLng.lng] as LatLngTuple);
+			const ring = Array.isArray(latLngs[0])
+				? (latLngs[0] as L.LatLng[])
+				: [];
+			updatedPolygon = ring.map(
+				(latLng) => [latLng.lat, latLng.lng] as LatLngTuple
+			);
 		});
 		if (!updatedPolygon) {
 			return;
 		}
 		const nextArea = calculateAreaHa(updatedPolygon);
 		setOverlayPolygon(updatedPolygon);
-		setDraftField((prev) => (prev ? { ...prev, polygon: updatedPolygon, area: nextArea } : prev));
-		setEditDraft((prev) => (prev ? { ...prev, area: nextArea.toFixed(2) } : prev));
+		setDraftField((prev) =>
+			prev ? { ...prev, polygon: updatedPolygon, area: nextArea } : prev
+		);
+		setEditDraft((prev) =>
+			prev ? { ...prev, area: nextArea.toFixed(2) } : prev
+		);
 	};
 
 	const handleSaveDraft = async () => {
@@ -721,7 +836,7 @@ export default function DashboardScreen() {
 			area: draftField.area,
 			areaUnit: "ha",
 			createdAt: now,
-			updatedAt: now
+			updatedAt: now,
 		};
 		await repository.create(newField);
 		setFields((prev) => [...prev, newField]);
@@ -746,8 +861,8 @@ export default function DashboardScreen() {
 			featurePolygon && featurePolygon.length > 0
 				? featurePolygon
 				: overlayPolygon.length > 0
-					? overlayPolygon
-					: selectedField.polygon;
+				? overlayPolygon
+				: selectedField.polygon;
 		if (polygonToSave.length < 3) {
 			setDraftError("Add a valid field polygon before saving.");
 			return;
@@ -763,10 +878,14 @@ export default function DashboardScreen() {
 			crop: editDraft.crop,
 			area: nextArea,
 			polygon: polygonToSave,
-			updatedAt: new Date().toISOString()
+			updatedAt: new Date().toISOString(),
 		};
 		await repository.update(updatedField);
-		setFields((prev) => prev.map((field) => (field.id === updatedField.id ? updatedField : field)));
+		setFields((prev) =>
+			prev.map((field) =>
+				field.id === updatedField.id ? updatedField : field
+			)
+		);
 		setSelectedFieldId(updatedField.id);
 		setEditDraft((prev) =>
 			prev ? { ...prev, area: nextArea.toFixed(2) } : prev
@@ -783,8 +902,10 @@ export default function DashboardScreen() {
 		}
 	};
 
-	const overlayTitle = overlayMode === "create" ? "Add field" : "Update field";
-	const overlayCenter = overlayPolygon.length > 0 ? overlayPolygon[0] : mapCenter;
+	const overlayTitle =
+		overlayMode === "create" ? "Add field" : "Update field";
+	const overlayCenter =
+		overlayPolygon.length > 0 ? overlayPolygon[0] : mapCenter;
 	const temperaturePanel =
 		forecastStatus === "loading" ? (
 			<div className="rounded-2xl border border-stone-100 bg-stone-50 p-6 text-sm text-stone-500">
@@ -829,23 +950,31 @@ export default function DashboardScreen() {
 						Fields, forecasts, and crop health at a glance.
 					</h1>
 					<p className="max-w-2xl text-base text-stone-600">
-						Select a field to unlock a live weather pulse, crop stats, and a clean map view.
+						Select a field to unlock a live weather pulse, crop
+						stats, and a clean map view.
 					</p>
 				</header>
 
 				<section className="rounded-3xl border border-emerald-100 bg-white/90 p-6 shadow-sm">
 					<div className="flex flex-wrap items-center justify-between gap-3">
 						<div>
-							<h2 className="text-lg font-semibold text-stone-800">Your fields</h2>
+							<h2 className="text-lg font-semibold text-stone-800">
+								Your fields
+							</h2>
 							<p className="text-sm text-stone-500">
-								Select a field to reveal map, forecast, and crop signals.
+								Select a field to reveal map, forecast, and crop
+								signals.
 							</p>
 						</div>
 						<div className="flex flex-wrap items-center gap-3">
 							<span className="badge badge-outline border-emerald-200 text-emerald-700">
 								{fields.length} fields
 							</span>
-							<button className="btn btn-success" type="button" onClick={openCreateOverlay}>
+							<button
+								className="btn btn-success"
+								type="button"
+								onClick={openCreateOverlay}
+							>
 								Add field
 							</button>
 						</div>
@@ -853,7 +982,8 @@ export default function DashboardScreen() {
 					<div className="mt-4 grid gap-3 md:grid-cols-2">
 						{fields.length === 0 ? (
 							<p className="text-sm text-stone-500">
-								No fields yet. Add your first plot to get started.
+								No fields yet. Add your first plot to get
+								started.
 							</p>
 						) : (
 							fields.map((field) => (
@@ -867,19 +997,30 @@ export default function DashboardScreen() {
 								>
 									<button
 										type="button"
-										onClick={() => setSelectedFieldId(field.id)}
+										onClick={() =>
+											setSelectedFieldId(field.id)
+										}
 										className="flex w-full items-start justify-between gap-3 text-left"
 									>
 										<div>
-											<p className="text-sm font-semibold text-stone-800">{field.name}</p>
-											<p className="text-xs text-stone-500">{field.crop}</p>
+											<p className="text-sm font-semibold text-stone-800">
+												{field.name}
+											</p>
+											<p className="text-xs text-stone-500">
+												{field.crop}
+											</p>
 										</div>
 										<span className="text-xs font-semibold text-emerald-700">
 											{formatHa(field.area)}
 										</span>
 									</button>
 									<div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-stone-500">
-										<span>Updated {new Date(field.updatedAt).toLocaleDateString()}</span>
+										<span>
+											Updated{" "}
+											{new Date(
+												field.updatedAt
+											).toLocaleDateString()}
+										</span>
 										<div className="flex items-center gap-3">
 											<button
 												type="button"
@@ -892,7 +1033,9 @@ export default function DashboardScreen() {
 											</button>
 											<button
 												type="button"
-												onClick={() => handleRemoveField(field.id)}
+												onClick={() =>
+													handleRemoveField(field.id)
+												}
 												className="font-semibold text-red-600 hover:text-red-700"
 											>
 												Remove
@@ -907,23 +1050,28 @@ export default function DashboardScreen() {
 
 				{selectedField ? (
 					<div className="flex flex-col gap-8">
-						<div className="grid gap-8 lg:grid-cols-2">
-							<section className="rounded-3xl border border-emerald-100 bg-white/90 p-4 shadow-sm">
+						<div className="grid gap-8 lg:grid-cols-2 xl:grid-cols-[minmax(0,2.2fr)_minmax(0,1.1fr)_minmax(0,0.85fr)]">
+							<section className="flex h-full flex-col rounded-3xl border border-emerald-100 bg-white/90 p-4 shadow-sm">
 								<div className="mb-3 flex flex-wrap items-center justify-between gap-2">
 									<div>
-										<h2 className="text-lg font-semibold text-stone-800">Field map</h2>
+										<h2 className="text-lg font-semibold text-stone-800">
+											Field map
+										</h2>
 										<p className="text-sm text-stone-500">
-											{selectedField.name} boundaries and location.
+											{selectedField.name} boundaries and
+											location.
 										</p>
 									</div>
 									<button
 										className="btn btn-outline btn-sm"
-										onClick={() => openEditOverlay(selectedField)}
+										onClick={() =>
+											openEditOverlay(selectedField)
+										}
 									>
 										Edit field
 									</button>
 								</div>
-								<div className="h-[360px] overflow-hidden rounded-2xl border border-emerald-100 md:h-[520px]">
+								<div className="h-[360px] flex-1 overflow-hidden rounded-2xl border border-emerald-100 md:h-[520px] xl:h-full">
 									<MapContainer
 										center={mapCenter}
 										zoom={13}
@@ -934,52 +1082,81 @@ export default function DashboardScreen() {
 											attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 											url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
 										/>
-										<Polygon positions={selectedField.polygon} pathOptions={{ color: "#0f766e" }} />
-										<FitBounds polygonPoints={selectedField.polygon} />
+										<Polygon
+											positions={selectedField.polygon}
+											pathOptions={{ color: "#0f766e" }}
+										/>
+										<FitBounds
+											polygonPoints={
+												selectedField.polygon
+											}
+										/>
 									</MapContainer>
 								</div>
 							</section>
 
-							<section className="rounded-3xl border border-emerald-100 bg-white/90 p-6 shadow-sm">
-								<h2 className="text-lg font-semibold text-stone-800">Field overview</h2>
-								<p className="text-sm text-stone-500">
-									{selectedField.crop} · {formatHa(selectedField.area)}
-								</p>
-								<div className="mt-4 grid gap-3 sm:grid-cols-2">
-									<div className="rounded-2xl border border-stone-100 bg-stone-50 p-4 text-sm text-stone-600">
-										<p className="font-semibold text-stone-700">Crop status</p>
-										<p className="mt-1">{getMockCropStatus(selectedField.id)}</p>
-									</div>
-									<div className="rounded-2xl border border-stone-100 bg-stone-50 p-4 text-sm text-stone-600">
-										<p className="font-semibold text-stone-700">Health score</p>
-										<p className="mt-1">{getMockHealthScore(selectedField.id)}</p>
-									</div>
+							<div className="flex flex-col gap-4">
+								<div className="rounded-3xl border border-stone-100 bg-white/90 p-5 shadow-sm">
+									<p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-400">
+										Crop
+									</p>
+									<p className="mt-2 text-lg font-semibold text-stone-800">
+										{selectedField.crop}
+									</p>
+									<p className="mt-1 text-sm text-stone-500">
+										{selectedField.name}
+									</p>
 								</div>
-							</section>
+								<div className="rounded-3xl border border-stone-100 bg-white/90 p-5 shadow-sm">
+									<p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-400">
+										Size
+									</p>
+									<p className="mt-2 text-3xl font-semibold text-stone-800">
+										{formatHa(selectedField.area)}
+									</p>
+									<p className="mt-1 text-sm text-stone-500">
+										Current planted area
+									</p>
+								</div>
+								<NdviLineChart series={ndviSeries} />
+							</div>
 						</div>
 
 						<div className="grid gap-8 lg:grid-cols-3">
 							{temperaturePanel}
 							{rainPanel}
-							<NdviLineChart series={ndviSeries} />
 							<div
 								className={`rounded-3xl border ${ndviTone.border} bg-gradient-to-br ${ndviTone.background} p-6 shadow-sm lg:col-span-3`}
 							>
 								<div className="flex items-start justify-between gap-4">
 									<div>
-										<p className="text-sm text-stone-500">NDVI score</p>
-										<p className={`mt-2 text-3xl font-semibold ${ndviTone.accent}`}>
+										<p className="text-sm text-stone-500">
+											NDVI score
+										</p>
+										<p
+											className={`mt-2 text-3xl font-semibold ${ndviTone.accent}`}
+										>
 											{ndviScore.toFixed(2)}
 										</p>
-										<p className={`text-sm font-semibold ${ndviTone.accent}`}>{ndviTone.label}</p>
+										<p
+											className={`text-sm font-semibold ${ndviTone.accent}`}
+										>
+											{ndviTone.label}
+										</p>
 									</div>
 									<div className="relative flex h-12 w-12 items-center justify-center">
 										<span
-											className={`absolute h-10 w-10 rounded-full ${ndviTone.ring} opacity-20 ${
-												isNdviExcellent ? "animate-pulse" : ""
+											className={`absolute h-10 w-10 rounded-full ${
+												ndviTone.ring
+											} opacity-20 ${
+												isNdviExcellent
+													? "animate-pulse"
+													: ""
 											}`}
 										/>
-										<span className={`relative h-3 w-3 rounded-full ${ndviTone.ring}`} />
+										<span
+											className={`relative h-3 w-3 rounded-full ${ndviTone.ring}`}
+										/>
 									</div>
 								</div>
 								<div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs text-stone-500">
@@ -997,12 +1174,19 @@ export default function DashboardScreen() {
 					<div className="max-h-[90vh] w-full max-w-5xl overflow-hidden rounded-3xl bg-white shadow-2xl">
 						<div className="flex flex-wrap items-center justify-between gap-3 border-b border-stone-100 px-6 py-4">
 							<div>
-								<h2 className="text-xl font-semibold text-stone-800">{overlayTitle}</h2>
+								<h2 className="text-xl font-semibold text-stone-800">
+									{overlayTitle}
+								</h2>
 								<p className="text-sm text-stone-500">
-									Draw or edit the polygon, then confirm the field details.
+									Draw or edit the polygon, then confirm the
+									field details.
 								</p>
 							</div>
-							<button className="btn btn-ghost" onClick={closeOverlay} type="button">
+							<button
+								className="btn btn-ghost"
+								onClick={closeOverlay}
+								type="button"
+							>
 								Close
 							</button>
 						</div>
@@ -1019,23 +1203,37 @@ export default function DashboardScreen() {
 											attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 											url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
 										/>
-										<FeatureGroup ref={setOverlayFeatureGroup}>
+										<FeatureGroup
+											ref={setOverlayFeatureGroup}
+										>
 											{overlayPolygon.length > 0 ? (
 												<Polygon
 													positions={overlayPolygon}
-													pathOptions={{ color: "#16a34a", weight: 2, fillOpacity: 0.2 }}
+													pathOptions={{
+														color: "#16a34a",
+														weight: 2,
+														fillOpacity: 0.2,
+													}}
 												/>
 											) : null}
 										</FeatureGroup>
 										<MapDrawControls
 											featureGroup={overlayFeatureGroup}
 											allowDraw={overlayMode === "create"}
-											allowEdit={overlayMode === "edit" ? overlayEditEnabled : overlayPolygon.length > 0}
-											layerSignature={overlayPolygonSignature}
+											allowEdit={
+												overlayMode === "edit"
+													? overlayEditEnabled
+													: overlayPolygon.length > 0
+											}
+											layerSignature={
+												overlayPolygonSignature
+											}
 											onCreated={handleCreated}
 											onEdited={handleEdited}
 										/>
-										<FitBounds polygonPoints={overlayPolygon} />
+										<FitBounds
+											polygonPoints={overlayPolygon}
+										/>
 									</MapContainer>
 								</div>
 								{overlayMode === "edit" ? (
@@ -1044,13 +1242,18 @@ export default function DashboardScreen() {
 											type="checkbox"
 											className="toggle toggle-success"
 											checked={overlayEditEnabled}
-											onChange={(event) => setOverlayEditEnabled(event.target.checked)}
+											onChange={(event) =>
+												setOverlayEditEnabled(
+													event.target.checked
+												)
+											}
 										/>
 										Enable polygon editing
 									</label>
 								) : (
 									<p className="text-sm text-stone-500">
-										Click the draw tool to outline a new field polygon.
+										Click the draw tool to outline a new
+										field polygon.
 									</p>
 								)}
 							</div>
@@ -1058,94 +1261,151 @@ export default function DashboardScreen() {
 								{overlayMode === "create" && draftField ? (
 									<div className="flex flex-col gap-4">
 										<label className="form-control">
-											<span className="label-text text-sm text-stone-600">Field name</span>
+											<span className="label-text text-sm text-stone-600">
+												Field name
+											</span>
 											<input
 												className="input input-bordered"
 												value={draftField.name}
 												onChange={(event) =>
 													setDraftField((prev) =>
-														prev ? { ...prev, name: event.target.value } : prev
+														prev
+															? {
+																	...prev,
+																	name: event
+																		.target
+																		.value,
+															  }
+															: prev
 													)
 												}
 												placeholder="North pasture"
 											/>
 										</label>
 										<label className="form-control">
-											<span className="label-text text-sm text-stone-600">Crop</span>
+											<span className="label-text text-sm text-stone-600">
+												Crop
+											</span>
 											<select
 												className="select select-bordered"
 												value={draftField.crop}
 												onChange={(event) =>
 													setDraftField((prev) =>
-														prev ? { ...prev, crop: event.target.value } : prev
+														prev
+															? {
+																	...prev,
+																	crop: event
+																		.target
+																		.value,
+															  }
+															: prev
 													)
 												}
 											>
-												<option value="">Select crop</option>
+												<option value="">
+													Select crop
+												</option>
 												{CROP_OPTIONS.map((crop) => (
-													<option key={crop} value={crop}>
+													<option
+														key={crop}
+														value={crop}
+													>
 														{crop}
 													</option>
 												))}
 											</select>
 										</label>
 										<label className="form-control">
-											<span className="label-text text-sm text-stone-600">Field size</span>
+											<span className="label-text text-sm text-stone-600">
+												Field size
+											</span>
 											<div className="flex items-center gap-2">
 												<input
 													type="number"
 													step="0.01"
 													className="input input-bordered"
-													value={draftField.area.toFixed(2)}
+													value={draftField.area.toFixed(
+														2
+													)}
 													onChange={(event) =>
-													setDraftField((prev) =>
-														prev
-															? {
-																	...prev,
-																	area: Number.parseFloat(event.target.value || "0")
-																}
-															: prev
-													)
-												}
+														setDraftField((prev) =>
+															prev
+																? {
+																		...prev,
+																		area: Number.parseFloat(
+																			event
+																				.target
+																				.value ||
+																				"0"
+																		),
+																  }
+																: prev
+														)
+													}
 												/>
-												<span className="text-sm text-stone-500">{AREA_UNIT}</span>
+												<span className="text-sm text-stone-500">
+													{AREA_UNIT}
+												</span>
 											</div>
 										</label>
 									</div>
 								) : overlayMode === "edit" && editDraft ? (
 									<div className="flex flex-col gap-4">
 										<label className="form-control">
-											<span className="label-text text-sm text-stone-600">Field name</span>
+											<span className="label-text text-sm text-stone-600">
+												Field name
+											</span>
 											<input
 												className="input input-bordered"
 												value={editDraft.name}
 												onChange={(event) =>
 													setEditDraft((prev) =>
-														prev ? { ...prev, name: event.target.value } : prev
+														prev
+															? {
+																	...prev,
+																	name: event
+																		.target
+																		.value,
+															  }
+															: prev
 													)
 												}
 											/>
 										</label>
 										<label className="form-control">
-											<span className="label-text text-sm text-stone-600">Crop</span>
+											<span className="label-text text-sm text-stone-600">
+												Crop
+											</span>
 											<select
 												className="select select-bordered"
 												value={editDraft.crop}
 												onChange={(event) =>
 													setEditDraft((prev) =>
-														prev ? { ...prev, crop: event.target.value } : prev
+														prev
+															? {
+																	...prev,
+																	crop: event
+																		.target
+																		.value,
+															  }
+															: prev
 													)
 												}
 											>
 												{CROP_OPTIONS.map((crop) => (
-													<option key={crop} value={crop}>
+													<option
+														key={crop}
+														value={crop}
+													>
 														{crop}
 													</option>
 												))}
 											</select>
 										</label>
 										<label className="form-control">
-											<span className="label-text text-sm text-stone-600">Field size</span>
+											<span className="label-text text-sm text-stone-600">
+												Field size
+											</span>
 											<div className="flex items-center gap-2">
 												<input
 													type="number"
@@ -1153,22 +1413,39 @@ export default function DashboardScreen() {
 													className="input input-bordered"
 													value={editDraft.area}
 													onChange={(event) =>
-													setEditDraft((prev) =>
-														prev ? { ...prev, area: event.target.value } : prev
-													)
-												}
+														setEditDraft((prev) =>
+															prev
+																? {
+																		...prev,
+																		area: event
+																			.target
+																			.value,
+																  }
+																: prev
+														)
+													}
 												/>
-												<span className="text-sm text-stone-500">{AREA_UNIT}</span>
+												<span className="text-sm text-stone-500">
+													{AREA_UNIT}
+												</span>
 											</div>
 										</label>
 									</div>
 								) : null}
 
-								{draftError ? <p className="text-sm text-red-600">{draftError}</p> : null}
+								{draftError ? (
+									<p className="text-sm text-red-600">
+										{draftError}
+									</p>
+								) : null}
 
 								<div className="mt-auto flex flex-wrap gap-3">
 									{overlayMode === "create" ? (
-										<button className="btn btn-success" type="button" onClick={handleSaveDraft}>
+										<button
+											className="btn btn-success"
+											type="button"
+											onClick={handleSaveDraft}
+										>
 											Save field
 										</button>
 									) : (
@@ -1180,7 +1457,11 @@ export default function DashboardScreen() {
 											Save updates
 										</button>
 									)}
-									<button className="btn btn-ghost" type="button" onClick={closeOverlay}>
+									<button
+										className="btn btn-ghost"
+										type="button"
+										onClick={closeOverlay}
+									>
 										Cancel
 									</button>
 								</div>
