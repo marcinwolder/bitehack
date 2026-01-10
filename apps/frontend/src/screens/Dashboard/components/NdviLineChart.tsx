@@ -79,11 +79,11 @@ export default function NdviLineChart({ series }: NdviChartProps) {
 					</span>
 				</div>
 			</div>
-			<div className="mt-4 overflow-hidden rounded-2xl border border-stone-100 bg-stone-50">
+			<div className="mt-4 aspect-[8/3] overflow-hidden rounded-2xl border border-stone-100 bg-stone-50">
 				<svg
 					viewBox={`0 0 ${width} ${height}`}
-					preserveAspectRatio="none"
-					className="h-56 w-full"
+					preserveAspectRatio="xMidYMid meet"
+					className="h-full w-full"
 					onMouseLeave={() => setHoverIndex(null)}
 					onMouseMove={(event) => {
 						const bounds = event.currentTarget.getBoundingClientRect();
