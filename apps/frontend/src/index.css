@@ -2,3 +2,34 @@
 @plugin "daisyui" {
 	themes: light --default;
 }
+
+:root {
+	font-family: "Source Sans 3", "Helvetica Neue", Arial, sans-serif;
+	color: #1d1b16;
+	background-color: #f6f2ea;
+}
+
+.font-display {
+	font-family: "DM Serif Display", "Times New Roman", serif;
+	letter-spacing: 0.02em;
+}
+
+.agro-bg {
+	background:
+		radial-gradient(1200px 500px at 5% -10%, rgba(34, 197, 94, 0.18), transparent 60%),
+		radial-gradient(900px 450px at 95% 5%, rgba(234, 179, 8, 0.18), transparent 55%),
+		linear-gradient(180deg, #faf7f1 0%, #f4efe6 45%, #ffffff 100%);
+}
+
+.orbit-sheen {
+	position: relative;
+}
+
+.orbit-sheen::after {
+	content: "";
+	position: absolute;
+	inset: -30% 12% auto;
+	height: 160%;
+	background: radial-gradient(40% 40% at 50% 50%, rgba(255, 255, 255, 0.6), transparent 70%);
+	pointer-events: none;
+}
