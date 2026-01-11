@@ -24,6 +24,7 @@ import {
 import NdviLineChart from "./components/NdviLineChart";
 import FieldSectionNav from "./components/FieldSectionNav";
 import SoilMoistureLineChart from "./components/SoilMoistureLineChart";
+import ChartLoadingCard from "./components/ChartLoadingCard";
 
 const FIELD_SECTION_DEFS = [
 	{ id: "section-map", label: "Map" },
@@ -59,6 +60,9 @@ export default function DashboardScreen() {
 	);
 	const [ndviSeries, setNdviSeries] = useState<NdviPoint[]>([]);
 	const [ndviScore, setNdviScore] = useState(0);
+	const [aiModelStatus, setAiModelStatus] = useState<
+		"idle" | "loading" | "error"
+	>("idle");
 	const overlayPolygonSignature = useMemo(
 		() => overlayPolygon.map(([lat, lng]) => `${lat},${lng}`).join("|"),
 		[overlayPolygon]
@@ -100,6 +104,8 @@ export default function DashboardScreen() {
 		: [];
 	const ndviTone = getNdviTone(ndviScore);
 	const isNdviExcellent = ndviScore >= 0.8;
+	const aiModelLoading = aiModelStatus === "loading";
+	const aiModelError = aiModelStatus === "error";
 
 	useEffect(() => {
 		if (!selectedField) {
@@ -131,9 +137,11 @@ export default function DashboardScreen() {
 		if (!selectedField) {
 			setNdviSeries([]);
 			setNdviScore(0);
+			setAiModelStatus("idle");
 			return;
 		}
 		const controller = new AbortController();
+		setAiModelStatus("loading");
 		Promise.all([
 			ndviService.getScore(selectedField.id, controller.signal),
 			ndviService.getSeries(selectedField.id, controller.signal),
@@ -142,12 +150,14 @@ export default function DashboardScreen() {
 				if (!controller.signal.aborted) {
 					setNdviScore(score);
 					setNdviSeries(series);
+					setAiModelStatus("idle");
 				}
 			})
 			.catch(() => {
 				if (!controller.signal.aborted) {
 					setNdviScore(0);
 					setNdviSeries([]);
+					setAiModelStatus("error");
 				}
 			});
 		return () => controller.abort();
@@ -510,15 +520,43 @@ export default function DashboardScreen() {
 									id="section-ndvi"
 									className="scroll-mt-24"
 								>
-									<NdviLineChart series={ndviSeries} />
+									{aiModelLoading ? (
+										<ChartLoadingCard
+											title="NDVI"
+											subtitle="Vegetation strength trend."
+											badgeLabel="AI Model"
+											badgeClassName="border-emerald-200 text-emerald-700"
+										/>
+									) : aiModelError ? (
+										<div className="rounded-3xl border border-rose-100 bg-rose-50 p-6 text-sm text-rose-600">
+											Unable to load NDVI data. Try again in a
+											moment.
+										</div>
+									) : (
+										<NdviLineChart series={ndviSeries} />
+									)}
 								</section>
 								<section
 									id="section-ai-model"
 									className="scroll-mt-24"
 								>
-									<SoilMoistureLineChart
-										series={soilMoistureSeries}
-									/>
+									{aiModelLoading ? (
+										<ChartLoadingCard
+											title="Soil moisture"
+											subtitle="Soil moisture trend."
+											badgeLabel="AI Model"
+											badgeClassName="border-cyan-200 text-cyan-700"
+										/>
+									) : aiModelError ? (
+										<div className="rounded-3xl border border-rose-100 bg-rose-50 p-6 text-sm text-rose-600">
+											Unable to load soil moisture insights.
+											Try again in a moment.
+										</div>
+									) : (
+										<SoilMoistureLineChart
+											series={soilMoistureSeries}
+										/>
+									)}
 								</section>
 							</div>
 						</div>

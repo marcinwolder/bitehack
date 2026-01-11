@@ -9,6 +9,21 @@ type WeatherPanelsProps = {
 	rainSectionId: string;
 };
 
+const WeatherLoadingCard = () => (
+	<div className="rounded-2xl border border-stone-100 bg-white/80 p-6">
+		<div className="flex items-center justify-between gap-4">
+			<div className="space-y-2">
+				<div className="skeleton h-4 w-28" />
+				<div className="skeleton h-3 w-36" />
+			</div>
+			<div className="h-2 w-2 rounded-full bg-emerald-400/80 animate-pulse" />
+		</div>
+		<div className="mt-4">
+			<div className="skeleton h-32 w-full rounded-xl" />
+		</div>
+	</div>
+);
+
 export default function WeatherPanels({
 	forecastStatus,
 	weatherSeries,
@@ -17,9 +32,7 @@ export default function WeatherPanels({
 }: WeatherPanelsProps) {
 	const temperaturePanel =
 		forecastStatus === "loading" ? (
-			<div className="rounded-2xl border border-stone-100 bg-stone-50 p-6 text-sm text-stone-500">
-				Loading weather data...
-			</div>
+			<WeatherLoadingCard />
 		) : forecastStatus === "error" ? (
 			<div className="rounded-2xl border border-red-100 bg-red-50 p-6 text-sm text-red-600">
 				Unable to load forecast. Check your connection and try again.
@@ -33,9 +46,7 @@ export default function WeatherPanels({
 		);
 	const rainPanel =
 		forecastStatus === "loading" ? (
-			<div className="rounded-2xl border border-stone-100 bg-stone-50 p-6 text-sm text-stone-500">
-				Loading weather data...
-			</div>
+			<WeatherLoadingCard />
 		) : forecastStatus === "error" ? (
 			<div className="rounded-2xl border border-red-100 bg-red-50 p-6 text-sm text-red-600">
 				Unable to load forecast. Check your connection and try again.

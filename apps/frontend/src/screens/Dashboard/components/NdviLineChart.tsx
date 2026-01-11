@@ -50,7 +50,7 @@ export default function NdviLineChart({ series }: NdviChartProps) {
 		hoverIndex !== null ? toPoint(series[hoverIndex].value, hoverIndex) : null;
 	const hoverLabel =
 		hoverIndex !== null
-			? `${Math.round(series[hoverIndex].value * 100)}%`
+			? series[hoverIndex].value.toFixed(2)
 			: null;
 	const hoverLabelWidth =
 		hoverLabel !== null ? hoverLabel.length * 7 + 12 : 0;
@@ -226,9 +226,9 @@ export default function NdviLineChart({ series }: NdviChartProps) {
 				<span>{formatShortDate(series[series.length - 1].date)}</span>
 			</div>
 			<div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-stone-500">
-				<span>Min {Math.round(minValue * 100)}%</span>
-				<span>Max {Math.round(maxValue * 100)}%</span>
-				<span>Range 0 - 100%</span>
+				<span>Min {minValue.toFixed(2)}</span>
+				<span>Max {maxValue.toFixed(2)}</span>
+				<span>Range 0.00 - 1.00</span>
 			</div>
 		</div>
 	);
