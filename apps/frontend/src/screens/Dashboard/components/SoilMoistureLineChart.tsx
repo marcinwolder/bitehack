@@ -1,14 +1,16 @@
 import { useState } from "react";
-import type { NdviChartProps } from "../types";
+import type { SoilMoistureChartProps } from "../types";
 import { buildSmoothPath, formatShortDate } from "../utils";
 
-export default function NdviLineChart({ series }: NdviChartProps) {
+export default function SoilMoistureLineChart({
+	series
+}: SoilMoistureChartProps) {
 	const [hoverIndex, setHoverIndex] = useState<number | null>(null);
 
 	if (series.length < 2) {
 		return (
 			<div className="rounded-2xl border border-stone-100 bg-stone-50 p-6 text-sm text-stone-500">
-				Not enough NDVI data for a chart yet.
+				Not enough soil moisture data for a chart yet.
 			</div>
 		);
 	}
@@ -62,18 +64,18 @@ export default function NdviLineChart({ series }: NdviChartProps) {
 	const hoverDateLabelHeight = 18;
 
 	return (
-		<div className="rounded-3xl border border-emerald-100 bg-white/90 p-6 shadow-sm">
+		<div className="rounded-3xl border border-cyan-100 bg-white/90 p-6 shadow-sm">
 			<div className="flex flex-wrap items-center justify-between gap-3">
 				<div>
 					<h3 className="text-lg font-semibold text-stone-800">
-						NDVI
+						Soil moisture
 					</h3>
 					<p className="text-sm text-stone-500">
-						Vegetation strength trend.
+						Soil moisture trend.
 					</p>
 				</div>
 				<div className="flex items-center gap-2">
-					<span className="badge badge-outline border-emerald-200 text-emerald-700">
+					<span className="badge badge-outline border-cyan-200 text-cyan-700">
 						AI Model
 					</span>
 					<span className="badge badge-ghost text-stone-500">
@@ -101,14 +103,14 @@ export default function NdviLineChart({ series }: NdviChartProps) {
 				>
 					<defs>
 						<linearGradient
-							id="ndviLine"
+							id="soilMoistureLine"
 							x1="0"
 							y1="0"
 							x2="1"
 							y2="1"
 						>
-							<stop offset="0%" stopColor="#16a34a" />
-							<stop offset="100%" stopColor="#84cc16" />
+							<stop offset="0%" stopColor="#0ea5e9" />
+							<stop offset="100%" stopColor="#22d3ee" />
 						</linearGradient>
 					</defs>
 					<rect
@@ -121,7 +123,7 @@ export default function NdviLineChart({ series }: NdviChartProps) {
 					<path
 						d={historicalPath}
 						fill="none"
-						stroke="url(#ndviLine)"
+						stroke="url(#soilMoistureLine)"
 						strokeWidth="3"
 						strokeLinecap="round"
 						strokeLinejoin="round"
@@ -130,7 +132,7 @@ export default function NdviLineChart({ series }: NdviChartProps) {
 						<path
 							d={forecastPath}
 							fill="none"
-							stroke="#84cc16"
+							stroke="#22d3ee"
 							strokeWidth="3"
 							strokeDasharray="6 6"
 							strokeLinecap="round"
@@ -144,7 +146,7 @@ export default function NdviLineChart({ series }: NdviChartProps) {
 								y1={hoverPoint.y}
 								x2={hoverPoint.x}
 								y2={xAxisY}
-								stroke="#bbf7d0"
+								stroke="#bae6fd"
 								strokeWidth="1.5"
 								strokeDasharray="4 4"
 							/>
@@ -153,7 +155,7 @@ export default function NdviLineChart({ series }: NdviChartProps) {
 								cy={hoverPoint.y}
 								r="5"
 								fill="#ffffff"
-								stroke="#16a34a"
+								stroke="#0ea5e9"
 								strokeWidth="2"
 							/>
 							<rect
@@ -166,7 +168,7 @@ export default function NdviLineChart({ series }: NdviChartProps) {
 								height={hoverLabelHeight}
 								rx="6"
 								fill="#ffffff"
-								stroke="#dcfce7"
+								stroke="#e0f2fe"
 							/>
 							<text
 								x={Math.min(
@@ -176,7 +178,7 @@ export default function NdviLineChart({ series }: NdviChartProps) {
 								y={Math.max(hoverPoint.y - hoverLabelHeight - 6, 6) + 14}
 								textAnchor="middle"
 								fontSize="11"
-								fill="#15803d"
+								fill="#0284c7"
 							>
 								{hoverLabel}
 							</text>
@@ -195,7 +197,7 @@ export default function NdviLineChart({ series }: NdviChartProps) {
 										height={hoverDateLabelHeight}
 										rx="6"
 										fill="#ffffff"
-										stroke="#dcfce7"
+										stroke="#e0f2fe"
 									/>
 									<text
 										x={Math.min(
@@ -210,7 +212,7 @@ export default function NdviLineChart({ series }: NdviChartProps) {
 										}
 										textAnchor="middle"
 										fontSize="10"
-										fill="#15803d"
+										fill="#0284c7"
 									>
 										{hoverDateLabel}
 									</text>

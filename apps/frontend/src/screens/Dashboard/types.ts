@@ -34,3 +34,13 @@ export type NdviPoint = {
 export type NdviChartProps = {
 	series: NdviPoint[];
 };
+
+export type SoilMoisturePoint = {
+	date: string;
+	value: number;
+	isForecast: boolean;
+};
+
+export type SoilMoistureChartProps = {
+	series: SoilMoisturePoint[];
+};

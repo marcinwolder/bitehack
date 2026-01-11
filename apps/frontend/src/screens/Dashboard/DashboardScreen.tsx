@@ -7,6 +7,7 @@ import type { DailyWeatherSeries } from "../../data/weatherService";
 import {
 	getMockNdviScore,
 	getMockNdviSeries,
+	getMockSoilMoistureSeries,
 } from "../../data/mockCropMetrics";
 import FieldListPanel from "./components/FieldListPanel";
 import FieldMap from "./components/FieldMap";
@@ -26,12 +27,14 @@ import {
 } from "./utils";
 import NdviLineChart from "./components/NdviLineChart";
 import FieldSectionNav from "./components/FieldSectionNav";
+import SoilMoistureLineChart from "./components/SoilMoistureLineChart";
 
 const FIELD_SECTION_DEFS = [
 	{ id: "section-map", label: "Map" },
 	{ id: "section-temperature", label: "Temperature" },
-	{ id: "section-rain", label: "Rain" },
+	{ id: "section-rain", label: "Rainfall" },
 	{ id: "section-ndvi", label: "NDVI" },
+	{ id: "section-ai-model", label: "Soil moisture" },
 ];
 
 export default function DashboardScreen() {
@@ -94,6 +97,9 @@ export default function DashboardScreen() {
 	const selectedField =
 		fields.find((field) => field.id === selectedFieldId) ?? null;
 	const ndviSeries = selectedField ? getMockNdviSeries(selectedField.id) : [];
+	const soilMoistureSeries = selectedField
+		? getMockSoilMoistureSeries(selectedField.id)
+		: [];
 	const ndviScore = selectedField ? getMockNdviScore(selectedField.id) : 0;
 	const ndviTone = getNdviTone(ndviScore);
 	const isNdviExcellent = ndviScore >= 0.8;
@@ -476,6 +482,14 @@ export default function DashboardScreen() {
 									className="scroll-mt-24"
 								>
 									<NdviLineChart series={ndviSeries} />
+								</section>
+								<section
+									id="section-ai-model"
+									className="scroll-mt-24"
+								>
+									<SoilMoistureLineChart
+										series={soilMoistureSeries}
+									/>
 								</section>
 							</div>
 						</div>

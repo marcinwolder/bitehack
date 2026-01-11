@@ -60,3 +60,20 @@ export const getMockNdviScore = (fieldId: string) => {
 	const average = recent.reduce((sum, point) => sum + point.value, 0) / recent.length;
 	return clamp(Number(average.toFixed(2)), 0, 1);
 };
+
+export const getMockSoilMoistureSeries = (fieldId: string) => {
+	const hash = hashId(`${fieldId}-soil`);
+	const base = 0.25 + (hash % 50) / 100;
+	const drift = ((hash % 13) - 6) / 600;
+	const dates = buildDateSeries(7, 14);
+	return dates.map((date, index) => {
+		const seasonal = Math.cos((index / 18) * Math.PI) * 0.09;
+		const noise = (((hash + index * 23) % 100) - 50) / 1100;
+		const value = clamp(base + seasonal + drift * index + noise, 0.1, 0.95);
+		return {
+			date,
+			value,
+			isForecast: index >= 7
+		};
+	});
+};
