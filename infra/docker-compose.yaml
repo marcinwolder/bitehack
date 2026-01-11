@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   posgis:
+    platform: linux/amd64
     image: postgis/postgis:13-3.5
     environment:
       POSTGRES_USER: ${POSTGRES_USER}

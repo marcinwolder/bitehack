@@ -5,3 +5,5 @@ sqlalchemy
 psycopg2-binary
 shapely
 geoalchemy2
+earthengine-api
+sqlmodel
