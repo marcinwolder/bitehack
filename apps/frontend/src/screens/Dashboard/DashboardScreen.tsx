@@ -447,7 +447,10 @@ export default function DashboardScreen() {
 									temperatureSectionId="section-temperature"
 									rainSectionId="section-rain"
 								/>
-								<section id="section-ndvi" className="scroll-mt-24">
+								<section
+									id="section-ndvi"
+									className="scroll-mt-24"
+								>
 									<NdviLineChart series={ndviSeries} />
 								</section>
 							</div>
@@ -478,6 +481,7 @@ export default function DashboardScreen() {
 				setDraftField={setDraftField}
 				setEditDraft={setEditDraft}
 			/>
+			<div className="h-screen" />
 		</div>
 	);
 }
