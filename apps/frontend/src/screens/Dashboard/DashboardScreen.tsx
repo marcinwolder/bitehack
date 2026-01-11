@@ -25,6 +25,14 @@ import {
 	getPolygonFromFeatureGroup,
 } from "./utils";
 import NdviLineChart from "./components/NdviLineChart";
+import FieldSectionNav from "./components/FieldSectionNav";
+
+const FIELD_SECTION_DEFS = [
+	{ id: "section-map", label: "Map" },
+	{ id: "section-temperature", label: "Temperature" },
+	{ id: "section-rain", label: "Rain" },
+	{ id: "section-ndvi", label: "NDVI" },
+];
 
 export default function DashboardScreen() {
 	const repository = useFieldRepository();
@@ -46,6 +54,9 @@ export default function DashboardScreen() {
 	const [overlayEditEnabled, setOverlayEditEnabled] = useState(false);
 	const [overlayFeatureGroup, setOverlayFeatureGroup] =
 		useState<L.FeatureGroup | null>(null);
+	const [activeSectionId, setActiveSectionId] = useState(
+		FIELD_SECTION_DEFS[0].id
+	);
 	const overlayPolygonSignature = useMemo(
 		() => overlayPolygon.map(([lat, lng]) => `${lat},${lng}`).join("|"),
 		[overlayPolygon]
@@ -117,6 +128,64 @@ export default function DashboardScreen() {
 			area: selectedField.area.toFixed(2),
 		});
 	}, [selectedField]);
+
+	useEffect(() => {
+		if (selectedField) {
+			setActiveSectionId(FIELD_SECTION_DEFS[0].id);
+		}
+	}, [selectedField]);
+
+	useEffect(() => {
+		if (!selectedField) {
+			return;
+		}
+		const ratios = new Map<string, number>();
+		const observer = new IntersectionObserver(
+			(entries) => {
+				entries.forEach((entry) => {
+					ratios.set(
+						entry.target.id,
+						entry.isIntersecting ? entry.intersectionRatio : 0
+					);
+				});
+				let nextId = FIELD_SECTION_DEFS[0].id;
+				let nextRatio = -1;
+				FIELD_SECTION_DEFS.forEach(({ id }) => {
+					const ratio = ratios.get(id) ?? 0;
+					if (ratio > nextRatio) {
+						nextRatio = ratio;
+						nextId = id;
+					}
+				});
+				if (nextRatio > 0) {
+					setActiveSectionId((prev) =>
+						prev === nextId ? prev : nextId
+					);
+				}
+			},
+			{
+				root: null,
+				rootMargin: "-20% 0px -55% 0px",
+				threshold: [0, 0.1, 0.25, 0.5, 0.75, 1],
+			}
+		);
+		FIELD_SECTION_DEFS.forEach(({ id }) => {
+			const element = document.getElementById(id);
+			if (element) {
+				ratios.set(id, 0);
+				observer.observe(element);
+			}
+		});
+		return () => observer.disconnect();
+	}, [selectedField]);
+
+	const handleNavigateSection = (sectionId: string) => {
+		const element = document.getElementById(sectionId);
+		if (!element) {
+			return;
+		}
+		element.scrollIntoView({ behavior: "smooth", block: "start" });
+	};
 
 	const openCreateOverlay = () => {
 		setOverlayMode("create");
@@ -342,29 +411,46 @@ export default function DashboardScreen() {
 				/>
 
 				{selectedField ? (
-					<div className="flex flex-col gap-8">
-						<div className="grid gap-8 lg:grid-cols-3">
-							<div className="lg:col-span-2">
-								<FieldMap
-									selectedField={selectedField}
-									mapCenter={mapCenter}
-									onEdit={() => openEditOverlay(selectedField)}
-								/>
-							</div>
-							<FieldSummaryPanel
-								selectedField={selectedField}
-								ndviScore={ndviScore}
-								ndviTone={ndviTone}
-								isNdviExcellent={isNdviExcellent}
+					<div className="relative flex flex-col gap-6">
+						<div className="lg:fixed lg:top-1/2 lg:z-20 lg:-translate-y-1/2 lg:left-[max(1.5rem,calc(50%-36rem-14rem))]">
+							<FieldSectionNav
+								sections={FIELD_SECTION_DEFS}
+								activeSectionId={activeSectionId}
+								onNavigate={handleNavigateSection}
 							/>
 						</div>
+						<div className="flex min-w-0 flex-1 flex-col gap-8">
+							<section id="section-map" className="scroll-mt-24">
+								<div className="grid gap-8 lg:grid-cols-3">
+									<div className="lg:col-span-2">
+										<FieldMap
+											selectedField={selectedField}
+											mapCenter={mapCenter}
+											onEdit={() =>
+												openEditOverlay(selectedField)
+											}
+										/>
+									</div>
+									<FieldSummaryPanel
+										selectedField={selectedField}
+										ndviScore={ndviScore}
+										ndviTone={ndviTone}
+										isNdviExcellent={isNdviExcellent}
+									/>
+								</div>
+							</section>
 
-						<div className="grid gap-8">
-							<WeatherPanels
-								forecastStatus={forecastStatus}
-								weatherSeries={weatherSeries}
-							/>
-							<NdviLineChart series={ndviSeries} />
+							<div className="grid gap-8">
+								<WeatherPanels
+									forecastStatus={forecastStatus}
+									weatherSeries={weatherSeries}
+									temperatureSectionId="section-temperature"
+									rainSectionId="section-rain"
+								/>
+								<section id="section-ndvi" className="scroll-mt-24">
+									<NdviLineChart series={ndviSeries} />
+								</section>
+							</div>
 						</div>
 					</div>
 				) : null}

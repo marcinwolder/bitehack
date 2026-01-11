@@ -5,11 +5,15 @@ import WeatherLineChart from "./WeatherLineChart";
 type WeatherPanelsProps = {
 	forecastStatus: "idle" | "loading" | "error";
 	weatherSeries: DailyWeatherSeries | null;
+	temperatureSectionId: string;
+	rainSectionId: string;
 };
 
 export default function WeatherPanels({
 	forecastStatus,
 	weatherSeries,
+	temperatureSectionId,
+	rainSectionId,
 }: WeatherPanelsProps) {
 	const temperaturePanel =
 		forecastStatus === "loading" ? (
@@ -46,8 +50,12 @@ export default function WeatherPanels({
 
 	return (
 		<>
-			{temperaturePanel}
-			{rainPanel}
+			<section id={temperatureSectionId} className="scroll-mt-24">
+				{temperaturePanel}
+			</section>
+			<section id={rainSectionId} className="scroll-mt-24">
+				{rainPanel}
+			</section>
 		</>
 	);
 }
