@@ -31,27 +31,36 @@ def compute_ndvi(geo_json) -> tuple[float, float]:
     lag_mean_ndvi = lag_stats.get('NDVI').getInfo()
     return lag_mean_ndvi, mean_ndvi
 
-def compute_ndvi_for_date(geo_json, target_date: date) -> float | None:
+def get_ndvi_with_dates(geo_json) -> list[dict[str, object]]:
+    """Return latest and second-latest NDVI values with their acquisition dates."""
+    current_date = date.today()
     polygon = ee.Geometry.Polygon(geo_json["coordinates"])
-    start_date = target_date.strftime('%Y-%m-%d')
-    end_date = (target_date + timedelta(days=1)).strftime('%Y-%m-%d')
-    collection = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED') \
-    .filterBounds(polygon) \
-    .filterDate(start_date, end_date) \
-    .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20)) \
-    .sort('system:time_start', False)
-
-    if collection.size().getInfo() == 0:
-        return None
+    collection = (
+        ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
+        .filterBounds(polygon)
+        .filterDate('2023-01-01', current_date.strftime('%Y-%m-%d'))
+        .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20))
+        .sort('system:time_start', False)
+    )
 
     latest_image = collection.first()
-    ndvi = latest_image.normalizedDifference(['B8', 'B4']).rename('NDVI').clip(polygon)
-    stats = ndvi.reduceRegion(
-        reducer=ee.Reducer.mean(),
-        geometry=polygon,
-        scale=10
-    )
-    return stats.get('NDVI').getInfo()
+    penultimate_image = ee.Image(collection.toList(2).get(1))
+
+    def _ndvi_with_date(image: ee.Image) -> dict[str, object]:
+        ndvi_img = image.normalizedDifference(['B8', 'B4']).rename('NDVI').clip(polygon)
+        stats = ndvi_img.reduceRegion(
+            reducer=ee.Reducer.mean(),
+            geometry=polygon,
+            scale=10,
+        )
+        value = stats.get('NDVI').getInfo()
+        capture_date = ee.Date(image.get('system:time_start')).format('YYYY-MM-dd').getInfo()
+        return {"date": capture_date, "ndvi": value}
+
+    latest = _ndvi_with_date(latest_image)
+    penultimate = _ndvi_with_date(penultimate_image)
+    return [latest, penultimate]
+
 
 def get_weather_series(
     lat: float,
