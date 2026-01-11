@@ -4,23 +4,19 @@ import { useFieldRepository } from "../../data/fieldRepositoryContext";
 import type { Field, LatLngTuple } from "../../data/fieldRepository";
 import { createOpenMeteoWeatherService } from "../../data/weatherService";
 import type { DailyWeatherSeries } from "../../data/weatherService";
-import {
-	getMockNdviScore,
-	getMockNdviSeries,
-	getMockSoilMoistureSeries,
-} from "../../data/mockCropMetrics";
+import { getMockSoilMoistureSeries } from "../../data/mockCropMetrics";
+import { createNdviService } from "../../data/ndviService";
 import FieldListPanel from "./components/FieldListPanel";
 import FieldMap from "./components/FieldMap";
 import FieldOverlayModal from "./components/FieldOverlayModal";
 import FieldSummaryPanel from "./components/FieldSummaryPanel";
 import WeatherPanels from "./components/WeatherPanels";
-import type { DraftField, EditFieldDraft } from "./types";
+import type { DraftField, EditFieldDraft, NdviPoint } from "./types";
 import {
 	MIN_AREA_HA,
 	MOCK_USER_ID,
 	WARSAW_CENTER,
 	calculateAreaHa,
-	createId,
 	getNdviTone,
 	getPolygonCentroid,
 	getPolygonFromFeatureGroup,
@@ -40,8 +36,9 @@ const FIELD_SECTION_DEFS = [
 export default function DashboardScreen() {
 	const repository = useFieldRepository();
 	const weatherService = useMemo(() => createOpenMeteoWeatherService(), []);
+	const ndviService = useMemo(() => createNdviService(), []);
 	const [fields, setFields] = useState<Field[]>([]);
-	const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
+	const [selectedFieldId, setSelectedFieldId] = useState<number | null>(null);
 	const [draftField, setDraftField] = useState<DraftField | null>(null);
 	const [editDraft, setEditDraft] = useState<EditFieldDraft | null>(null);
 	const [draftError, setDraftError] = useState<string | null>(null);
@@ -60,6 +57,8 @@ export default function DashboardScreen() {
 	const [activeSectionId, setActiveSectionId] = useState(
 		FIELD_SECTION_DEFS[0].id
 	);
+	const [ndviSeries, setNdviSeries] = useState<NdviPoint[]>([]);
+	const [ndviScore, setNdviScore] = useState(0);
 	const overlayPolygonSignature = useMemo(
 		() => overlayPolygon.map(([lat, lng]) => `${lat},${lng}`).join("|"),
 		[overlayPolygon]
@@ -96,11 +95,9 @@ export default function DashboardScreen() {
 
 	const selectedField =
 		fields.find((field) => field.id === selectedFieldId) ?? null;
-	const ndviSeries = selectedField ? getMockNdviSeries(selectedField.id) : [];
 	const soilMoistureSeries = selectedField
 		? getMockSoilMoistureSeries(selectedField.id)
 		: [];
-	const ndviScore = selectedField ? getMockNdviScore(selectedField.id) : 0;
 	const ndviTone = getNdviTone(ndviScore);
 	const isNdviExcellent = ndviScore >= 0.8;
 
@@ -129,6 +126,32 @@ export default function DashboardScreen() {
 			});
 		return () => controller.abort();
 	}, [selectedField, weatherService]);
+
+	useEffect(() => {
+		if (!selectedField) {
+			setNdviSeries([]);
+			setNdviScore(0);
+			return;
+		}
+		const controller = new AbortController();
+		Promise.all([
+			ndviService.getScore(selectedField.id, controller.signal),
+			ndviService.getSeries(selectedField.id, controller.signal),
+		])
+			.then(([score, series]) => {
+				if (!controller.signal.aborted) {
+					setNdviScore(score);
+					setNdviSeries(series);
+				}
+			})
+			.catch(() => {
+				if (!controller.signal.aborted) {
+					setNdviScore(0);
+					setNdviSeries([]);
+				}
+			});
+		return () => controller.abort();
+	}, [ndviService, selectedField]);
 
 	useEffect(() => {
 		if (!selectedField) {
@@ -320,7 +343,7 @@ export default function DashboardScreen() {
 		}
 		const now = new Date().toISOString();
 		const newField: Field = {
-			id: createId(),
+			id: 0,
 			userId: MOCK_USER_ID,
 			name: draftField.name.trim(),
 			crop: draftField.crop,
@@ -330,9 +353,9 @@ export default function DashboardScreen() {
 			createdAt: now,
 			updatedAt: now,
 		};
-		await repository.create(newField);
-		setFields((prev) => [...prev, newField]);
-		setSelectedFieldId(newField.id);
+		const createdField = await repository.create(newField);
+		setFields((prev) => [...prev, createdField]);
+		setSelectedFieldId(createdField.id);
 		closeOverlay();
 	};
 
@@ -377,13 +400,13 @@ export default function DashboardScreen() {
 			polygon: polygonToSave,
 			updatedAt: new Date().toISOString(),
 		};
-		await repository.update(updatedField);
+		const savedField = await repository.update(updatedField);
 		setFields((prev) =>
 			prev.map((field) =>
-				field.id === updatedField.id ? updatedField : field
+				field.id === updatedField.id ? savedField : field
 			)
 		);
-		setSelectedFieldId(updatedField.id);
+		setSelectedFieldId(savedField.id);
 		setEditDraft((prev) =>
 			prev ? { ...prev, area: manualArea.toFixed(2) } : prev
 		);
@@ -391,7 +414,7 @@ export default function DashboardScreen() {
 		closeOverlay();
 	};
 
-	const handleRemoveField = async (fieldId: string) => {
+	const handleRemoveField = async (fieldId: number) => {
 		await repository.remove(fieldId, MOCK_USER_ID);
 		setFields((prev) => prev.filter((field) => field.id !== fieldId));
 		if (selectedFieldId === fieldId) {
@@ -440,7 +463,7 @@ export default function DashboardScreen() {
 				<FieldListPanel
 					fields={fields}
 					selectedFieldId={selectedFieldId}
-					onSelect={setSelectedFieldId}
+					onSelect={(fieldId) => setSelectedFieldId(fieldId)}
 					onEdit={openEditOverlay}
 					onRemove={handleRemoveField}
 					onAdd={openCreateOverlay}

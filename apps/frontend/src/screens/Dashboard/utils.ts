@@ -1,8 +1,9 @@
-import area from "@turf/area";
 import centroid from "@turf/centroid";
-import { polygon } from "@turf/helpers";
 import L from "leaflet";
 import type { LatLngTuple } from "../../data/fieldRepository";
+import { calculateAreaHa, toLngLatRing } from "../../data/geoUtils";
+
+export { calculateAreaHa, toLngLatRing };
 
 export const MOCK_USER_ID = 1;
 export const AREA_UNIT = "ha";
@@ -26,31 +27,10 @@ export const CROP_OPTIONS = [
 	"Other",
 ];
 
-export const toLngLatRing = (polygonPoints: LatLngTuple[]) => {
-	const ring = polygonPoints.map(([lat, lng]) => [lng, lat]);
-	if (ring.length > 0) {
-		const [firstLng, firstLat] = ring[0];
-		const [lastLng, lastLat] = ring[ring.length - 1];
-		if (firstLng !== lastLng || firstLat !== lastLat) {
-			ring.push([firstLng, firstLat]);
-		}
-	}
-	return ring;
-};
-
-export const calculateAreaHa = (polygonPoints: LatLngTuple[]) => {
-	if (polygonPoints.length < 3) {
-		return 0;
-	}
-	const ring = toLngLatRing(polygonPoints);
-	const poly = polygon([ring]);
-	return area(poly) / 10000;
-};
-
 export const getPolygonCentroid = (polygonPoints: LatLngTuple[]) => {
 	const ring = toLngLatRing(polygonPoints);
-	const poly = polygon([ring]);
-	const center = centroid(poly).geometry.coordinates;
+	const center = centroid({ type: "Polygon", coordinates: [ring] }).geometry
+		.coordinates;
 	return { lat: center[1], lon: center[0] };
 };
 
@@ -93,12 +73,6 @@ export const getNdviTone = (score: number) => {
 	};
 };
 
-export const createId = () => {
-	if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-		return crypto.randomUUID();
-	}
-	return `field-${Date.now()}`;
-};
 
 export const getPolygonFromFeatureGroup = (
 	featureGroup: L.FeatureGroup | null

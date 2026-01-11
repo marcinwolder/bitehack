@@ -3,10 +3,10 @@ import { formatHa } from "../utils";
 
 type FieldListPanelProps = {
 	fields: Field[];
-	selectedFieldId: string | null;
-	onSelect: (fieldId: string) => void;
+	selectedFieldId: number | null;
+	onSelect: (fieldId: number) => void;
 	onEdit: (field: Field) => void;
-	onRemove: (fieldId: string) => void;
+	onRemove: (fieldId: number) => void | Promise<void>;
 	onAdd: () => void;
 };
 

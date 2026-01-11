@@ -6,21 +6,22 @@ const STATUS_OPTIONS = [
 	"Needs attention"
 ];
 
-const hashId = (value: string) => {
+const hashId = (value: string | number) => {
 	let hash = 0;
-	for (let i = 0; i < value.length; i += 1) {
-		hash = (hash << 5) - hash + value.charCodeAt(i);
+	const str = value.toString();
+	for (let i = 0; i < str.length; i += 1) {
+		hash = (hash << 5) - hash + str.charCodeAt(i);
 		hash |= 0;
 	}
 	return Math.abs(hash);
 };
 
-export const getMockCropStatus = (fieldId: string) => {
+export const getMockCropStatus = (fieldId: string | number) => {
 	const hash = hashId(fieldId);
 	return STATUS_OPTIONS[hash % STATUS_OPTIONS.length];
 };
 
-export const getMockHealthScore = (fieldId: string) => {
+export const getMockHealthScore = (fieldId: string | number) => {
 	const hash = hashId(fieldId);
 	return 62 + (hash % 38);
 };
@@ -37,7 +38,7 @@ const buildDateSeries = (historicalDays: number, forecastDays: number) => {
 	});
 };
 
-export const getMockNdviSeries = (fieldId: string) => {
+export const getMockNdviSeries = (fieldId: string | number) => {
 	const hash = hashId(fieldId);
 	const base = 0.35 + (hash % 45) / 100;
 	const drift = ((hash % 17) - 8) / 500;
@@ -54,14 +55,14 @@ export const getMockNdviSeries = (fieldId: string) => {
 	});
 };
 
-export const getMockNdviScore = (fieldId: string) => {
+export const getMockNdviScore = (fieldId: string | number) => {
 	const series = getMockNdviSeries(fieldId);
 	const recent = series.slice(4, 7);
 	const average = recent.reduce((sum, point) => sum + point.value, 0) / recent.length;
 	return clamp(Number(average.toFixed(2)), 0, 1);
 };
 
-export const getMockSoilMoistureSeries = (fieldId: string) => {
+export const getMockSoilMoistureSeries = (fieldId: string | number) => {
 	const hash = hashId(`${fieldId}-soil`);
 	const base = 0.25 + (hash % 50) / 100;
 	const drift = ((hash % 13) - 6) / 600;

@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     POSTGRES_HOST: str
     DATABASE_URL: str = ""
     AGRO_API_KEY: str = os.getenv("AGRO_API_KEY", "")
+    FRONTEND_ORIGINS: str = os.getenv(
+        "FRONTEND_ORIGINS",
+        "http://localhost:3000,http://localhost:5173"
+    )
 
     class Config:
         env_file = ".env"

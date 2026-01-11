@@ -23,10 +23,31 @@ def create_farm(db_session: SessionDep, user_id: int, farm_data: FarmBase) -> Fa
     """Create a new farm."""
     coords = farm_data.area.coordinates[0]  # outer ring
     area = ShapelyPolygon(coords)
-    db_farm = Farm(user_id=user_id, name=farm_data.name, area=from_shape(area))
+    db_farm = Farm(
+        user_id=user_id,
+        name=farm_data.name,
+        crop=farm_data.crop,
+        area=from_shape(area)
+    )
     db_session.add(db_farm)
     db_session.commit()
     db_session.refresh(db_farm)
     return db_farm
 
+def update_farm(db_session: SessionDep, farm_id: int, farm_data: FarmBase) -> Farm:
+    farm = get_farm(db_session, farm_id)
+    coords = farm_data.area.coordinates[0]
+    area = ShapelyPolygon(coords)
+    farm.name = farm_data.name
+    farm.crop = farm_data.crop
+    farm.area = from_shape(area)
+    db_session.add(farm)
+    db_session.commit()
+    db_session.refresh(farm)
+    return farm
+
+def delete_farm(db_session: SessionDep, farm_id: int) -> None:
+    farm = get_farm(db_session, farm_id)
+    db_session.delete(farm)
+    db_session.commit()
 

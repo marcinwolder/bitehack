@@ -7,6 +7,7 @@ from geoalchemy2 import Geometry
 class Farm(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
+    crop: str
     user_id: int
 
     area: str | None = Field(

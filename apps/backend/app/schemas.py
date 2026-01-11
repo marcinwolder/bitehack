@@ -10,6 +10,7 @@ class Polygon(BaseModel):
 
 class FarmBase(BaseModel):
     name: str
+    crop: str
     area: Polygon
 
 class PolygonOut(BaseModel):
@@ -20,6 +21,7 @@ class FarmOut(BaseModel):
     id: int
     user_id: int
     name: str
+    crop: str
     area: PolygonOut
 
     model_config = ConfigDict(from_attributes=True)
@@ -37,3 +39,8 @@ class FarmOut(BaseModel):
             return area
         geojson = mapping(to_shape(area))
         return PolygonOut(**geojson)
+
+class NdviPoint(BaseModel):
+    date: str
+    value: float
+    is_forecast: bool

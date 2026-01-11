@@ -1,14 +1,22 @@
+from datetime import date
 from fastapi import APIRouter
 from geoalchemy2.shape import to_shape
 from shapely.geometry import mapping
 from app import crud
 from app.ml import predict
 from app.database import SessionDep
-from app.schemas import FarmBase, FarmOut
-from app.utils.api_calls import compute_ndvi, get_weather_data
+from app.schemas import FarmBase, FarmOut, NdviPoint
+from app.utils.api_calls import (
+    compute_ndvi,
+    compute_ndvi_for_date,
+    get_weather_data,
+    get_weather_series
+)
 
 
 router = APIRouter(tags=["farms"])
+HISTORICAL_DAYS = 7
+FORECAST_DAYS = 14
 
 
 @router.post("/", summary="Add a new farm", status_code=201, response_model=FarmOut)
@@ -20,6 +28,16 @@ def add_farm(db_session: SessionDep, farm: FarmBase) -> FarmOut:
         farm_data=farm,
     )
     return FarmOut.model_validate(new_farm, from_attributes=True)
+
+@router.put("/{farm_id}", summary="Update a farm", response_model=FarmOut)
+def update_farm(db_session: SessionDep, farm_id: int, farm: FarmBase) -> FarmOut:
+    updated_farm = crud.update_farm(db_session, farm_id, farm)
+    return FarmOut.model_validate(updated_farm, from_attributes=True)
+
+@router.delete("/{farm_id}", summary="Delete a farm", status_code=204)
+def delete_farm(db_session: SessionDep, farm_id: int) -> None:
+    crud.delete_farm(db_session, farm_id)
+    return None
 
 @router.get("/", summary="List farms", response_model=list[FarmOut])
 def list_farms(db_session: SessionDep) -> list[FarmOut]:
@@ -42,8 +60,78 @@ def predict_farm_ndvi(db_session: SessionDep, farm_id: int) -> float:
     lon = polygon.centroid.x
     weather_data = get_weather_data(lat, lon)
     ndvi = compute_ndvi(mapping(polygon))
-    ndvi = 0.4
+    if ndvi is None:
+        ndvi = 0.5
     return predict(
         ndvi,
         weather_data
     )
+
+@router.get("/{farm_id}/ndvi-series", summary="Get NDVI series for a farm", response_model=list[NdviPoint])
+def get_farm_ndvi_series(db_session: SessionDep, farm_id: int) -> list[NdviPoint]:
+    farm = crud.get_farm(db_session, farm_id)
+    polygon = to_shape(farm.area)
+    lat = polygon.centroid.y
+    lon = polygon.centroid.x
+    weather_series = get_weather_series(
+        lat,
+        lon,
+        historical_days=HISTORICAL_DAYS,
+        forecast_days=FORECAST_DAYS
+    )
+    if not weather_series:
+        return []
+    geo_json = mapping(polygon)
+    historical_items = weather_series[:HISTORICAL_DAYS]
+    historical_values: list[float] = []
+    last_known: float | None = None
+    for item in historical_items:
+        try:
+            target_date = date.fromisoformat(item["date"])
+        except ValueError:
+            continue
+        value = compute_ndvi_for_date(geo_json, target_date)
+        if value is None:
+            value = last_known
+        if value is None:
+            value = 0.5
+        last_known = value
+        historical_values.append(value)
+
+    if not historical_values:
+        fallback = compute_ndvi(geo_json)
+        if fallback is None:
+            fallback = 0.5
+        historical_values = [fallback] * len(historical_items)
+        last_known = fallback
+
+    if len(historical_values) < len(historical_items):
+        historical_values.extend(
+            [last_known or 0.5] * (len(historical_items) - len(historical_values))
+        )
+
+    series: list[NdviPoint] = []
+    last_ndvi = historical_values[-1] if historical_values else 0.5
+    for index, item in enumerate(weather_series):
+        if index < HISTORICAL_DAYS:
+            series.append(
+                NdviPoint(
+                    date=item["date"],
+                    value=historical_values[index],
+                    is_forecast=False
+                )
+            )
+            last_ndvi = historical_values[index]
+        else:
+            last_ndvi = predict(
+                last_ndvi,
+                [(item["temperature"], item["precipitation"])]
+            )
+            series.append(
+                NdviPoint(
+                    date=item["date"],
+                    value=last_ndvi,
+                    is_forecast=True
+                )
+            )
+    return series
