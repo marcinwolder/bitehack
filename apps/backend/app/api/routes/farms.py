@@ -1,7 +1,12 @@
 from fastapi import APIRouter
-from app.schemas import FarmBase, FarmOut
+from geoalchemy2.shape import to_shape
+from shapely.geometry import mapping
 from app import crud
+from app.ml import predict
 from app.database import SessionDep
+from app.schemas import FarmBase, FarmOut
+from app.utils.api_calls import compute_ndvi, get_weather_data
+
 
 router = APIRouter(tags=["farms"])
 
@@ -16,6 +21,11 @@ def add_farm(db_session: SessionDep, farm: FarmBase) -> FarmOut:
     )
     return FarmOut.model_validate(new_farm, from_attributes=True)
 
+@router.get("/", summary="List farms", response_model=list[FarmOut])
+def list_farms(db_session: SessionDep) -> list[FarmOut]:
+    """List all farms for the current user."""
+    farms = crud.list_farms(db_session, user_id=1)
+    return [FarmOut.model_validate(farm, from_attributes=True) for farm in farms]
 
 @router.get("/{farm_id}", summary="Get farm by ID", response_model=FarmOut | None)
 def get_farm(db_session: SessionDep, farm_id: int) -> FarmOut | None:
@@ -23,3 +33,17 @@ def get_farm(db_session: SessionDep, farm_id: int) -> FarmOut | None:
     farm = crud.get_farm(db_session, farm_id)
     return FarmOut.model_validate(farm, from_attributes=True) if farm else None
 
+@router.get("/{farm_id}/ndvi", summary="Get NDVI for a farm", response_model=float)
+def predict_farm_ndvi(db_session: SessionDep, farm_id: int) -> float:
+    """Retrieve the NDVI for a farm by its ID."""
+    farm = crud.get_farm(db_session, farm_id)
+    polygon = to_shape(farm.area)
+    lat = polygon.centroid.y
+    lon = polygon.centroid.x
+    weather_data = get_weather_data(lat, lon)
+    ndvi = compute_ndvi(mapping(polygon))
+    ndvi = 0.4
+    return predict(
+        ndvi,
+        weather_data
+    )

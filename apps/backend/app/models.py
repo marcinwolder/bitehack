@@ -18,5 +18,3 @@ class Farm(SQLModel, table=True):
 class Recommendation(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     farm_id: int
-    
-    

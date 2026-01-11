@@ -1,15 +1,23 @@
-from typing import Optional
+from fastapi import HTTPException
 from sqlalchemy import select
+from geoalchemy2.shape import from_shape
+from shapely.geometry import Polygon as ShapelyPolygon
 from app.database import SessionDep
 from app.schemas import FarmBase
 from app.models import Farm
-from geoalchemy2.shape import from_shape
-from shapely.geometry import Polygon as ShapelyPolygon
 
-def get_farm(db_session: SessionDep, farm_id: int) -> Farm | None:
+def get_farm(db_session: SessionDep, farm_id: int) -> Farm:
     """Retrieve a farm by its ID."""
     statement = select(Farm).where(Farm.id == farm_id)
-    return db_session.exec(statement).scalar_one_or_none()
+    farm = db_session.exec(statement).scalar_one_or_none()
+    if farm is None:
+        raise HTTPException(status_code=404, detail="Farm not found")
+    return farm
+
+def list_farms(db_session: SessionDep, user_id: int) -> list[Farm]:
+    statement = select(Farm).where(Farm.user_id == user_id)
+    farms = db_session.exec(statement).scalars().all()
+    return farms
 
 def create_farm(db_session: SessionDep, user_id: int, farm_data: FarmBase) -> Farm:
     """Create a new farm."""
@@ -20,4 +28,5 @@ def create_farm(db_session: SessionDep, user_id: int, farm_data: FarmBase) -> Fa
     db_session.commit()
     db_session.refresh(db_farm)
     return db_farm
+
 

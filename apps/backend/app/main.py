@@ -1,13 +1,15 @@
+import ee
 from fastapi import FastAPI
+from contextlib import asynccontextmanager
 from app.api.router import router as api_router
 from app.core.config import settings
 from app.database import init_db
-from contextlib import asynccontextmanager
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    ee.Initialize()
     yield
 
 

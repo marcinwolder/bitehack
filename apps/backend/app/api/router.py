@@ -1,5 +1,4 @@
 from fastapi import APIRouter
-
 from app.api.routes.farms import router as farms_router
 
 router = APIRouter()

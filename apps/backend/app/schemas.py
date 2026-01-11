@@ -1,7 +1,7 @@
 from pydantic import BaseModel, ConfigDict, field_validator
 from shapely.geometry import mapping
 from geoalchemy2.shape import to_shape
-from typing import List, Literal, Dict
+from typing import List, Literal
 from pydantic import field_serializer
 
 class Polygon(BaseModel):

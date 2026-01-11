@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     POSTGRES_DB: str
     POSTGRES_HOST: str
     DATABASE_URL: str = ""
+    AGRO_API_KEY: str = os.getenv("AGRO_API_KEY", "")
 
     class Config:
         env_file = ".env"
