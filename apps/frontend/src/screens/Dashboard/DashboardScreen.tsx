@@ -388,17 +388,34 @@ export default function DashboardScreen() {
 	return (
 		<div className="min-h-screen bg-gradient-to-br from-emerald-50 via-amber-50 to-white text-stone-900">
 			<div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 pb-16 pt-10 sm:px-6 lg:px-10">
-				<header className="flex flex-col gap-2">
-					<span className="text-sm font-semibold uppercase tracking-[0.3em] text-emerald-700">
-						Farm Dashboard
-					</span>
-					<h1 className="font-display text-4xl text-stone-900 sm:text-5xl">
-						Fields, forecasts, and crop health at a glance.
-					</h1>
-					<p className="max-w-2xl text-base text-stone-600">
-						Select a field to unlock a live weather pulse, crop
-						stats, and a clean map view.
-					</p>
+				<header className="flex flex-col gap-6">
+					<div className="flex flex-wrap items-center justify-between gap-4">
+						<span className="text-sm font-semibold uppercase tracking-[0.3em] text-emerald-700">
+							Farm Dashboard
+						</span>
+						<div className="flex items-center gap-3 rounded-full border border-white/70 bg-white/80 px-3 py-1.5 shadow-sm">
+							<div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-600 text-sm font-semibold text-white">
+								M
+							</div>
+							<div className="text-sm">
+								<p className="font-semibold text-stone-800">
+									Marcin
+								</p>
+								<p className="text-xs text-stone-500">
+									Signed in
+								</p>
+							</div>
+						</div>
+					</div>
+					<div className="flex flex-col gap-2">
+						<h1 className="font-display text-4xl text-stone-900 sm:text-5xl">
+							Fields, forecasts, and crop health at a glance.
+						</h1>
+						<p className="max-w-2xl text-base text-stone-600">
+							Select a field to unlock a live weather pulse, crop
+							stats, and a clean map view.
+						</p>
+					</div>
 				</header>
 
 				<FieldListPanel
