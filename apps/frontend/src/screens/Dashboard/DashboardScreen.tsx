@@ -358,16 +358,21 @@ export default function DashboardScreen() {
 			setDraftError("Add a valid field polygon before saving.");
 			return;
 		}
-		const nextArea = calculateAreaHa(polygonToSave);
-		if (nextArea < MIN_AREA_HA) {
+		const polygonArea = calculateAreaHa(polygonToSave);
+		if (polygonArea < MIN_AREA_HA) {
 			setDraftError("Polygon is too small. Try a larger field area.");
+			return;
+		}
+		const manualArea = Number.parseFloat(editDraft.area);
+		if (!Number.isFinite(manualArea) || manualArea <= 0) {
+			setDraftError("Enter a valid field size.");
 			return;
 		}
 		const updatedField: Field = {
 			...selectedField,
 			name: editDraft.name.trim(),
 			crop: editDraft.crop,
-			area: nextArea,
+			area: manualArea,
 			polygon: polygonToSave,
 			updatedAt: new Date().toISOString(),
 		};
@@ -379,7 +384,7 @@ export default function DashboardScreen() {
 		);
 		setSelectedFieldId(updatedField.id);
 		setEditDraft((prev) =>
-			prev ? { ...prev, area: nextArea.toFixed(2) } : prev
+			prev ? { ...prev, area: manualArea.toFixed(2) } : prev
 		);
 		setDraftError(null);
 		closeOverlay();

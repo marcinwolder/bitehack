@@ -65,10 +65,15 @@ export default function FieldOverlayModal({
 							{overlayTitle}
 						</h2>
 						<p className="text-sm text-stone-500">
-							Draw or edit the polygon, then confirm the field details.
+							Draw or edit the polygon, then confirm the field
+							details.
 						</p>
 					</div>
-					<button className="btn btn-ghost" onClick={onClose} type="button">
+					<button
+						className="btn btn-ghost"
+						onClick={onClose}
+						type="button"
+					>
 						Close
 					</button>
 				</div>
@@ -118,13 +123,16 @@ export default function FieldOverlayModal({
 									type="checkbox"
 									className="toggle toggle-success"
 									checked={overlayEditEnabled}
-									onChange={(event) => onToggleEdit(event.target.checked)}
+									onChange={(event) =>
+										onToggleEdit(event.target.checked)
+									}
 								/>
 								Enable polygon editing
 							</label>
 						) : (
 							<p className="text-sm text-stone-500">
-								Click the draw tool to outline a new field polygon.
+								Click the draw tool to outline a new field
+								polygon.
 							</p>
 						)}
 					</div>
@@ -140,7 +148,13 @@ export default function FieldOverlayModal({
 										value={draftField.name}
 										onChange={(event) =>
 											setDraftField((prev) =>
-												prev ? { ...prev, name: event.target.value } : prev
+												prev
+													? {
+															...prev,
+															name: event.target
+																.value,
+													  }
+													: prev
 											)
 										}
 										placeholder="North pasture"
@@ -155,7 +169,13 @@ export default function FieldOverlayModal({
 										value={draftField.crop}
 										onChange={(event) =>
 											setDraftField((prev) =>
-												prev ? { ...prev, crop: event.target.value } : prev
+												prev
+													? {
+															...prev,
+															crop: event.target
+																.value,
+													  }
+													: prev
 											)
 										}
 									>
@@ -183,7 +203,9 @@ export default function FieldOverlayModal({
 														? {
 																...prev,
 																area: Number.parseFloat(
-																	event.target.value || "0"
+																	event.target
+																		.value ||
+																		"0"
 																),
 														  }
 														: prev
@@ -207,7 +229,13 @@ export default function FieldOverlayModal({
 										value={editDraft.name}
 										onChange={(event) =>
 											setEditDraft((prev) =>
-												prev ? { ...prev, name: event.target.value } : prev
+												prev
+													? {
+															...prev,
+															name: event.target
+																.value,
+													  }
+													: prev
 											)
 										}
 									/>
@@ -216,12 +244,19 @@ export default function FieldOverlayModal({
 									<span className="label-text text-sm text-stone-600">
 										Crop
 									</span>
+									<br />
 									<select
 										className="select select-bordered"
 										value={editDraft.crop}
 										onChange={(event) =>
 											setEditDraft((prev) =>
-												prev ? { ...prev, crop: event.target.value } : prev
+												prev
+													? {
+															...prev,
+															crop: event.target
+																.value,
+													  }
+													: prev
 											)
 										}
 									>
@@ -244,7 +279,14 @@ export default function FieldOverlayModal({
 											value={editDraft.area}
 											onChange={(event) =>
 												setEditDraft((prev) =>
-													prev ? { ...prev, area: event.target.value } : prev
+													prev
+														? {
+																...prev,
+																area: event
+																	.target
+																	.value,
+														  }
+														: prev
 												)
 											}
 										/>
@@ -262,15 +304,27 @@ export default function FieldOverlayModal({
 
 						<div className="mt-auto flex flex-wrap gap-3">
 							{overlayMode === "create" ? (
-								<button className="btn btn-success" type="button" onClick={onSave}>
+								<button
+									className="btn btn-success"
+									type="button"
+									onClick={onSave}
+								>
 									Save field
 								</button>
 							) : (
-								<button className="btn btn-outline" type="button" onClick={onUpdate}>
+								<button
+									className="btn btn-outline"
+									type="button"
+									onClick={onUpdate}
+								>
 									Save updates
 								</button>
 							)}
-							<button className="btn btn-ghost" type="button" onClick={onClose}>
+							<button
+								className="btn btn-ghost"
+								type="button"
+								onClick={onClose}
+							>
 								Cancel
 							</button>
 						</div>
