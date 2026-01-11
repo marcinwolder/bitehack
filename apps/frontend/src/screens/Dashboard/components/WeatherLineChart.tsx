@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { WeatherChartProps } from "../types";
-import { formatShortDate } from "../utils";
+import { buildSmoothPath, formatShortDate } from "../utils";
 
 export default function WeatherLineChart({ series }: WeatherChartProps) {
 	const [hoverIndex, setHoverIndex] = useState<number | null>(null);
@@ -29,11 +29,6 @@ export default function WeatherLineChart({ series }: WeatherChartProps) {
 		const y = padding + (1 - (value - minTemp) / range) * chartHeight;
 		return { x, y };
 	};
-	const toPointString = (value: number, index: number) => {
-		const point = toPoint(value, index);
-		return `${point.x},${point.y}`;
-	};
-
 	const firstForecastIndex = series.findIndex((point) => point.isForecast);
 	const splitIndex =
 		firstForecastIndex === -1 ? series.length : firstForecastIndex;
@@ -42,15 +37,14 @@ export default function WeatherLineChart({ series }: WeatherChartProps) {
 		firstForecastIndex === -1
 			? []
 			: series.slice(Math.max(splitIndex - 1, 0));
-	const historicalPath = historical
-		.map((point, index) => toPointString(point.temperature, index))
-		.join(" ");
-	const forecastPath = forecast
-		.map((point, index) => {
-			const absoluteIndex = index + Math.max(splitIndex - 1, 0);
-			return toPointString(point.temperature, absoluteIndex);
-		})
-		.join(" ");
+	const historicalPath = buildSmoothPath(
+		historical.map((point, index) => toPoint(point.temperature, index))
+	);
+	const forecastPath = buildSmoothPath(
+		forecast.map((point, index) =>
+			toPoint(point.temperature, index + Math.max(splitIndex - 1, 0))
+		)
+	);
 	const midIndex = Math.floor(series.length / 2);
 	const hoverPoint =
 		hoverIndex !== null ? toPoint(series[hoverIndex].temperature, hoverIndex) : null;
@@ -122,8 +116,8 @@ export default function WeatherLineChart({ series }: WeatherChartProps) {
 						height={height}
 						fill="#f8fafc"
 					/>
-					<polyline
-						points={historicalPath}
+					<path
+						d={historicalPath}
 						fill="none"
 						stroke="url(#tempLine)"
 						strokeWidth="3"
@@ -131,8 +125,8 @@ export default function WeatherLineChart({ series }: WeatherChartProps) {
 						strokeLinejoin="round"
 					/>
 					{forecast.length > 1 ? (
-						<polyline
-							points={forecastPath}
+						<path
+							d={forecastPath}
 							fill="none"
 							stroke="#0ea5e9"
 							strokeWidth="3"
