@@ -67,6 +67,13 @@ export default function DashboardScreen() {
 	}, [repository]);
 
 	useEffect(() => {
+		if (selectedFieldId || fields.length === 0) {
+			return;
+		}
+		setSelectedFieldId(fields[0].id);
+	}, [fields, selectedFieldId]);
+
+	useEffect(() => {
 		if (!navigator.geolocation) {
 			return;
 		}
