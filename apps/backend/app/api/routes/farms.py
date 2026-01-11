@@ -64,7 +64,5 @@ def predict_farm_ndvi(db_session: SessionDep, farm_id: int) -> float:
     lat = polygon.centroid.y
     lon = polygon.centroid.x
     weather_data = get_weather_data(lat, lon)
-    ndvi = compute_ndvi(mapping(polygon))
-    if ndvi is None:
-        ndvi = 0.5
-    return predict(ndvi, weather_data)
+    ndvi_lag, ndvi = compute_ndvi(mapping(polygon))
+    return predict(ndvi_lag, ndvi, weather_data)

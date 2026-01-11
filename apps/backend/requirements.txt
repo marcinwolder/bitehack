@@ -7,3 +7,7 @@ shapely
 geoalchemy2
 earthengine-api
 sqlmodel
+scikit-learn
+joblib
+requests
+python-dotenv

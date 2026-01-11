@@ -2,7 +2,7 @@ import ee
 import requests
 from datetime import date, timedelta
 
-def compute_ndvi(geo_json) -> float:
+def compute_ndvi(geo_json) -> tuple[float, float]:
     current_date = date.today()
     polygon = ee.Geometry.Polygon(geo_json["coordinates"])
     collection = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED') \
@@ -12,6 +12,7 @@ def compute_ndvi(geo_json) -> float:
     .sort('system:time_start', False)
 
     latest_image = collection.first()
+    penultimate_image = ee.Image(collection.toList(2).get(1))
 
     ndvi = latest_image.normalizedDifference(['B8', 'B4']).rename('NDVI').clip(polygon)
     stats = ndvi.reduceRegion(
@@ -19,8 +20,16 @@ def compute_ndvi(geo_json) -> float:
         geometry=polygon,
         scale=10
     )
+
+    lag_ndvi = penultimate_image.normalizedDifference(['B8', 'B4']).rename('NDVI').clip(polygon)
+    lag_stats = lag_ndvi.reduceRegion(
+        reducer=ee.Reducer.mean(),
+        geometry=polygon,
+        scale=10
+    )
     mean_ndvi = stats.get('NDVI').getInfo()
-    return mean_ndvi
+    lag_mean_ndvi = lag_stats.get('NDVI').getInfo()
+    return lag_mean_ndvi, mean_ndvi
 
 def compute_ndvi_for_date(geo_json, target_date: date) -> float | None:
     polygon = ee.Geometry.Polygon(geo_json["coordinates"])
