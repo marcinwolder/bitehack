@@ -142,21 +142,18 @@ export default function DashboardScreen() {
 		}
 		const controller = new AbortController();
 		setAiModelStatus("loading");
-		Promise.all([
-			ndviService.getScore(selectedField.id, controller.signal),
-			ndviService.getSeries(selectedField.id, controller.signal),
-		])
-			.then(([score, series]) => {
+		setNdviSeries([]);
+		ndviService
+			.getScore(selectedField.id, controller.signal)
+			.then((score) => {
 				if (!controller.signal.aborted) {
 					setNdviScore(score);
-					setNdviSeries(series);
 					setAiModelStatus("idle");
 				}
 			})
 			.catch(() => {
 				if (!controller.signal.aborted) {
 					setNdviScore(0);
-					setNdviSeries([]);
 					setAiModelStatus("error");
 				}
 			});
