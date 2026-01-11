@@ -22,6 +22,7 @@ export default function NdviLineChart({ series }: NdviChartProps) {
 	const height = 240;
 	const chartWidth = width - padding * 2;
 	const chartHeight = height - padding * 2;
+	const xAxisY = padding + chartHeight;
 
 	const toPoint = (value: number, index: number) => {
 		const x = padding + (index / (series.length - 1)) * chartWidth;
@@ -58,6 +59,11 @@ export default function NdviLineChart({ series }: NdviChartProps) {
 	const hoverLabelWidth =
 		hoverLabel !== null ? hoverLabel.length * 7 + 12 : 0;
 	const hoverLabelHeight = 20;
+	const hoverDateLabel =
+		hoverIndex !== null ? formatShortDate(series[hoverIndex].date) : null;
+	const hoverDateLabelWidth =
+		hoverDateLabel !== null ? hoverDateLabel.length * 7 + 12 : 0;
+	const hoverDateLabelHeight = 18;
 
 	return (
 		<div className="rounded-3xl border border-emerald-100 bg-white/90 p-6 shadow-sm">
@@ -137,6 +143,15 @@ export default function NdviLineChart({ series }: NdviChartProps) {
 					) : null}
 					{hoverPoint && hoverLabel ? (
 						<g>
+							<line
+								x1={hoverPoint.x}
+								y1={hoverPoint.y}
+								x2={hoverPoint.x}
+								y2={xAxisY}
+								stroke="#bbf7d0"
+								strokeWidth="1.5"
+								strokeDasharray="4 4"
+							/>
 							<circle
 								cx={hoverPoint.x}
 								cy={hoverPoint.y}
@@ -169,6 +184,42 @@ export default function NdviLineChart({ series }: NdviChartProps) {
 							>
 								{hoverLabel}
 							</text>
+							{hoverDateLabel ? (
+								<g>
+									<rect
+										x={Math.min(
+											Math.max(hoverPoint.x - hoverDateLabelWidth / 2, 6),
+											width - hoverDateLabelWidth - 6
+										)}
+										y={Math.min(
+											xAxisY + 4,
+											height - hoverDateLabelHeight - 2
+										)}
+										width={hoverDateLabelWidth}
+										height={hoverDateLabelHeight}
+										rx="6"
+										fill="#ffffff"
+										stroke="#dcfce7"
+									/>
+									<text
+										x={Math.min(
+											Math.max(hoverPoint.x - hoverDateLabelWidth / 2, 6),
+											width - hoverDateLabelWidth - 6
+										) + hoverDateLabelWidth / 2}
+										y={
+											Math.min(
+												xAxisY + 4,
+												height - hoverDateLabelHeight - 2
+											) + 12
+										}
+										textAnchor="middle"
+										fontSize="10"
+										fill="#15803d"
+									>
+										{hoverDateLabel}
+									</text>
+								</g>
+							) : null}
 						</g>
 					) : null}
 				</svg>
