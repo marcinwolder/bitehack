@@ -10,13 +10,34 @@ type NdviScoreCardProps = {
 	ndviScore: number;
 	ndviTone: NdviTone;
 	isNdviExcellent: boolean;
+	isLoading?: boolean;
 };
 
 export default function NdviScoreCard({
 	ndviScore,
 	ndviTone,
 	isNdviExcellent,
+	isLoading = false,
 }: NdviScoreCardProps) {
+	if (isLoading) {
+		return (
+			<div className="rounded-3xl border border-stone-100 bg-white/90 p-6 shadow-sm lg:col-span-3">
+				<span className="sr-only">Loading NDVI score.</span>
+				<div className="flex items-start justify-between gap-4">
+					<div className="space-y-2">
+						<div className="skeleton h-3 w-20" />
+						<div className="skeleton h-8 w-24" />
+						<div className="skeleton h-3 w-24" />
+					</div>
+					<div className="skeleton h-12 w-12 rounded-full" />
+				</div>
+				<div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+					<div className="skeleton h-3 w-28" />
+					<div className="skeleton h-3 w-32" />
+				</div>
+			</div>
+		);
+	}
 	return (
 		<div
 			className={`rounded-3xl border ${ndviTone.border} bg-gradient-to-br ${ndviTone.background} p-6 shadow-sm lg:col-span-3`}

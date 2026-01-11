@@ -505,6 +505,7 @@ export default function DashboardScreen() {
 										ndviScore={ndviScore}
 										ndviTone={ndviTone}
 										isNdviExcellent={isNdviExcellent}
+										isNdviLoading={aiModelLoading}
 									/>
 								</div>
 							</section>

@@ -7,6 +7,7 @@ type FieldSummaryPanelProps = {
 	ndviScore: number;
 	ndviTone: NdviTone;
 	isNdviExcellent: boolean;
+	isNdviLoading?: boolean;
 };
 
 export default function FieldSummaryPanel({
@@ -14,6 +15,7 @@ export default function FieldSummaryPanel({
 	ndviScore,
 	ndviTone,
 	isNdviExcellent,
+	isNdviLoading = false,
 }: FieldSummaryPanelProps) {
 	return (
 		<div className="flex flex-col gap-4">
@@ -43,6 +45,7 @@ export default function FieldSummaryPanel({
 				ndviScore={ndviScore}
 				ndviTone={ndviTone}
 				isNdviExcellent={isNdviExcellent}
+				isLoading={isNdviLoading}
 			/>
 		</div>
 	);
