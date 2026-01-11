@@ -37,7 +37,8 @@ cp infra/.env-example infra/.env
 
 3) Start the stack:
 ```
-docker compose -f infra/docker-compose.yaml --env-file infra/.env up --build
+cd infra
+docker compose up --build
 ```
 
 4) Open the app:
@@ -51,6 +52,7 @@ docker compose -f infra/docker-compose.yaml --env-file infra/.env up --build
 - `PUT /api/farms/{farm_id}` - update farm.
 - `DELETE /api/farms/{farm_id}` - delete farm.
 - `GET /api/farms/{farm_id}/ndvi` - NDVI-based score for a farm.
+- `GET /api/farms/{farm_id}/ndvi-chart` - NDVI-based chart data for a farm.
 
 ## Notes
 

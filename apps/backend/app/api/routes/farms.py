@@ -68,7 +68,11 @@ def predict_farm_ndvi(db_session: SessionDep, farm_id: int) -> float:
     ndvi_lag, ndvi = compute_ndvi(mapping(polygon))
     return predict(ndvi_lag, ndvi, weather_data)
 
-@router.get("/{farm_id}/ndvi/chart", summary="Get chart of NDVI values", response_model=float)
+@router.get(
+    "/{farm_id}/ndvi-chart",
+    summary="Get chart of NDVI values",
+    response_model=list[dict],
+)
 def get_farm_ndvi_chart(db_session: SessionDep, farm_id: int) -> list[dict]:
     """Retrieve the NDVI for a farm by its ID."""
     farm = crud.get_farm(db_session, farm_id)

@@ -143,17 +143,21 @@ export default function DashboardScreen() {
 		const controller = new AbortController();
 		setAiModelStatus("loading");
 		setNdviSeries([]);
-		ndviService
-			.getScore(selectedField.id, controller.signal)
-			.then((score) => {
+		Promise.all([
+			ndviService.getScore(selectedField.id, controller.signal),
+			ndviService.getSeries(selectedField.id, controller.signal),
+		])
+			.then(([score, series]) => {
 				if (!controller.signal.aborted) {
 					setNdviScore(score);
+					setNdviSeries(series);
 					setAiModelStatus("idle");
 				}
 			})
 			.catch(() => {
 				if (!controller.signal.aborted) {
 					setNdviScore(0);
+					setNdviSeries([]);
 					setAiModelStatus("error");
 				}
 			});
@@ -527,8 +531,8 @@ export default function DashboardScreen() {
 										/>
 									) : aiModelError ? (
 										<div className="rounded-3xl border border-rose-100 bg-rose-50 p-6 text-sm text-rose-600">
-											Unable to load NDVI data. Try again in a
-											moment.
+											Unable to load NDVI data. Try again
+											in a moment.
 										</div>
 									) : (
 										<NdviLineChart series={ndviSeries} />
@@ -547,8 +551,8 @@ export default function DashboardScreen() {
 										/>
 									) : aiModelError ? (
 										<div className="rounded-3xl border border-rose-100 bg-rose-50 p-6 text-sm text-rose-600">
-											Unable to load soil moisture insights.
-											Try again in a moment.
+											Unable to load soil moisture
+											insights. Try again in a moment.
 										</div>
 									) : (
 										<SoilMoistureLineChart
