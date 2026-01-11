@@ -1,7 +1,7 @@
 import { FeatureGroup, MapContainer, Polygon, TileLayer } from "react-leaflet";
 import L from "leaflet";
 import type { Dispatch, SetStateAction } from "react";
-import type { LatLngTuple } from "../../data/fieldRepository";
+import type { LatLngTuple } from "../../../data/fieldRepository";
 import type { DraftField, EditFieldDraft } from "../types";
 import { AREA_UNIT, CROP_OPTIONS } from "../utils";
 import FitBounds from "./FitBounds";
@@ -24,7 +24,7 @@ type FieldOverlayModalProps = {
 	onUpdate: () => void;
 	onToggleEdit: (nextValue: boolean) => void;
 	onCreated: (event: L.LeafletEvent) => void;
-	onEdited: (event: L.DrawEvents.Edited) => void;
+	onEdited: (event: L.LeafletEvent) => void;
 	onSetOverlayFeatureGroup: (featureGroup: L.FeatureGroup | null) => void;
 	setDraftField: Dispatch<SetStateAction<DraftField | null>>;
 	setEditDraft: Dispatch<SetStateAction<EditFieldDraft | null>>;
@@ -47,7 +47,7 @@ export default function FieldOverlayModal({
 	onUpdate,
 	onToggleEdit,
 	onCreated,
-	onEdited,
+	onEdited: handleEdited,
 	onSetOverlayFeatureGroup,
 	setDraftField,
 	setEditDraft,
@@ -102,18 +102,18 @@ export default function FieldOverlayModal({
 										/>
 									) : null}
 								</FeatureGroup>
-								<MapDrawControls
-									featureGroup={overlayFeatureGroup}
-									allowDraw={overlayMode === "create"}
-									allowEdit={
-										overlayMode === "edit"
-											? overlayEditEnabled
-											: overlayPolygon.length > 0
-									}
-									layerSignature={overlayPolygonSignature}
-									onCreated={onCreated}
-									onEdited={onEdited}
-								/>
+									<MapDrawControls
+										featureGroup={overlayFeatureGroup}
+										allowDraw={overlayMode === "create"}
+										allowEdit={
+											overlayMode === "edit"
+												? overlayEditEnabled
+												: overlayPolygon.length > 0
+										}
+										layerSignature={overlayPolygonSignature}
+										onCreated={onCreated}
+										onEdited={handleEdited}
+									/>
 								<FitBounds polygonPoints={overlayPolygon} />
 							</MapContainer>
 						</div>

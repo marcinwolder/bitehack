@@ -1,5 +1,5 @@
 import { MapContainer, Polygon, TileLayer } from "react-leaflet";
-import type { Field, LatLngTuple } from "../../data/fieldRepository";
+import type { Field, LatLngTuple } from "../../../data/fieldRepository";
 import FitBounds from "./FitBounds";
 
 type FieldMapProps = {

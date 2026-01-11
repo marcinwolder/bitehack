@@ -273,8 +273,8 @@ export default function DashboardScreen() {
 		setDraftError(null);
 	};
 
-	const handleEdited = (event: L.DrawEvents.Edited) => {
-		const layers = event.layers;
+	const handleEdited = (event: L.LeafletEvent) => {
+		const layers = (event as L.DrawEvents.Edited).layers;
 		let updatedPolygon: LatLngTuple[] | null = null;
 		layers.eachLayer((layer) => {
 			if (!(layer instanceof L.Polygon)) {
@@ -291,10 +291,11 @@ export default function DashboardScreen() {
 		if (!updatedPolygon) {
 			return;
 		}
-		const nextArea = calculateAreaHa(updatedPolygon);
-		setOverlayPolygon(updatedPolygon);
+		const safePolygon = updatedPolygon;
+		const nextArea = calculateAreaHa(safePolygon);
+		setOverlayPolygon(safePolygon);
 		setDraftField((prev) =>
-			prev ? { ...prev, polygon: updatedPolygon, area: nextArea } : prev
+			prev ? { ...prev, polygon: safePolygon, area: nextArea } : prev
 		);
 		setEditDraft((prev) =>
 			prev ? { ...prev, area: nextArea.toFixed(2) } : prev
@@ -348,8 +349,8 @@ export default function DashboardScreen() {
 			return;
 		}
 		const featurePolygon = getPolygonFromFeatureGroup(overlayFeatureGroup);
-		const polygonToSave =
-			featurePolygon && featurePolygon.length > 0
+		const polygonToSave: LatLngTuple[] =
+			featurePolygon && Array.isArray(featurePolygon)
 				? featurePolygon
 				: overlayPolygon.length > 0
 				? overlayPolygon

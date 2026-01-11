@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useMap } from "react-leaflet";
 import L from "leaflet";
-import type { LatLngTuple } from "../../data/fieldRepository";
+import type { LatLngTuple } from "../../../data/fieldRepository";
 
 type FitBoundsProps = {
 	polygonPoints: LatLngTuple[] | null;

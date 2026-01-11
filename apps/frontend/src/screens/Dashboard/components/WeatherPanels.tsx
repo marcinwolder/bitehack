@@ -1,4 +1,4 @@
-import type { DailyWeatherSeries } from "../../data/weatherService";
+import type { DailyWeatherSeries } from "../../../data/weatherService";
 import RainLineChart from "./RainLineChart";
 import WeatherLineChart from "./WeatherLineChart";
 

@@ -8,7 +8,7 @@ type MapDrawControlsProps = {
 	allowEdit: boolean;
 	layerSignature: string;
 	onCreated: (event: L.LeafletEvent) => void;
-	onEdited: (event: L.DrawEvents.Edited) => void;
+	onEdited: (event: L.LeafletEvent) => void;
 };
 
 export default function MapDrawControls({

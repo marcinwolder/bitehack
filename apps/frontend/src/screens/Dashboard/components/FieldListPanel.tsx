@@ -1,4 +1,4 @@
-import type { Field } from "../../data/fieldRepository";
+import type { Field } from "../../../data/fieldRepository";
 import { formatHa } from "../utils";
 
 type FieldListPanelProps = {
