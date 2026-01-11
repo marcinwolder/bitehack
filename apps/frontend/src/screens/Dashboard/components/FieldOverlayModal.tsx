@@ -102,18 +102,18 @@ export default function FieldOverlayModal({
 										/>
 									) : null}
 								</FeatureGroup>
-									<MapDrawControls
-										featureGroup={overlayFeatureGroup}
-										allowDraw={overlayMode === "create"}
-										allowEdit={
-											overlayMode === "edit"
-												? overlayEditEnabled
-												: overlayPolygon.length > 0
-										}
-										layerSignature={overlayPolygonSignature}
-										onCreated={onCreated}
-										onEdited={handleEdited}
-									/>
+								<MapDrawControls
+									featureGroup={overlayFeatureGroup}
+									allowDraw={overlayMode === "create"}
+									allowEdit={
+										overlayMode === "edit"
+											? overlayEditEnabled
+											: overlayPolygon.length > 0
+									}
+									layerSignature={overlayPolygonSignature}
+									onCreated={onCreated}
+									onEdited={handleEdited}
+								/>
 								<FitBounds polygonPoints={overlayPolygon} />
 							</MapContainer>
 						</div>
@@ -164,6 +164,7 @@ export default function FieldOverlayModal({
 									<span className="label-text text-sm text-stone-600">
 										Crop
 									</span>
+									<br />
 									<select
 										className="select select-bordered"
 										value={draftField.crop}
