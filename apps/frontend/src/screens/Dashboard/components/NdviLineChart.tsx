@@ -72,7 +72,7 @@ export default function NdviLineChart({ series }: NdviChartProps) {
 				</div>
 				<div className="flex items-center gap-2">
 					<span className="badge badge-outline border-emerald-200 text-emerald-700">
-						Mock NDVI
+						AI Model
 					</span>
 					<span className="badge badge-ghost text-stone-500">
 						Index
